@@ -1,0 +1,5 @@
+package enums;
+
+public enum EngineState {
+	STARTING, ENTERING, EXITING, RUNNING, PAUSED, SHOWING_DIALOG, CUTSCENE
+}
