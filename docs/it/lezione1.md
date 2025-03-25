@@ -190,11 +190,11 @@ Un viaggio che ha trasformato un fenomeno di nicchia in uno dei pilastri dell’
 
 # Il Game Loop
 
-Il Game Loop è il cuore di ogni videogioco ed è composto da tre fasi principali:
+Il game loop rappresenta l’insieme delle operazioni svolte per generare ogni singolo frame: l’aggiornamento dello stato del gioco e il rendering, cioè la generazione del frame con i dati aggiornati. Nella moderna programmazione dei videogiochi, si preferisce dividere la frequenza degli update del gioco (ups, update per second) dalla frequenza di rendering (fps, frame per second), per esempio per poter aggiornare il gioco a una frequenza maggiore rispetto a quella di generazione dei frame.
 
-1. **Gestione degli input dell'utente** (tastiera, mouse, controller).
-2. **Aggiornamento dello stato di gioco** (posizioni, collisioni, logica).
-3. **Rendering della scena aggiornata** sullo schermo.
+Il Game Loop è il cuore di ogni videogioco ed è composto da due fasi principali:
+1. **Aggiornamento dello stato di gioco** (posizioni, collisioni, logica).
+2. **Rendering della scena aggiornata** sullo schermo.
 
 Questo ciclo si ripete continuamente per tutta la durata del gioco.
 
