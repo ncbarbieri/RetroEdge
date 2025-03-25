@@ -254,5 +254,3 @@ while(running) {
 
 - Steven L. Kent, *The Ultimate History of Video Games*, Three Rivers Press, 2001.
 - Documentazione storica di Nintendo, Sega, Atari e Tandy/Radio Shack.
-- Schede e manuali originali di *Dungeons of Daggorath* (1982) per TRS-80.
-- Approfondimenti su *The Legend of Zelda* e *A Link to the Past* dagli archivi Nintendo.
