@@ -1,4 +1,4 @@
-# Lezione 1: Introduzione agli ARPG e il Game Loop
+# Lezione 1: Introduzione agli ARPG
 
 # Storia dei videogiochi: dalle origini alle icone a 16 bit
 
@@ -181,74 +181,9 @@ Gli home computer offrivano più libertà creativa rispetto alle console, favore
 
 ## Conclusioni
 
-Dalle ricerche accademiche e prototipi sperimentali, passando per l’home computing e le prime console, fino ai grandi classici degli anni '90, i videogiochi hanno attraversato un'evoluzione culturale profonda.  
-Giochi come *Dungeons of Daggorath* e *The Legend of Zelda* hanno tracciato la via per il genere action RPG, culminando con capolavori come *A Link to the Past* (1991).  
-Un viaggio che ha trasformato un fenomeno di nicchia in uno dei pilastri dell’intrattenimento globale.
+Dalle ricerche accademiche e prototipi sperimentali, passando per l’home computing e le prime console, fino ai grandi classici degli anni '90, i videogiochi hanno attraversato un'evoluzione culturale profonda. Giochi come *Dungeons of Daggorath* e *The Legend of Zelda* hanno tracciato la via per il genere action RPG, culminando con capolavori come *A Link to the Past* (1991). Un viaggio che ha trasformato un fenomeno di nicchia in uno dei pilastri dell’intrattenimento globale.
 
 ---
-
-
-# Il Game Loop
-
-Il game loop rappresenta l’insieme delle operazioni svolte per generare ogni singolo frame: l’aggiornamento dello stato del gioco e il rendering, cioè la generazione del frame con i dati aggiornati. Nella moderna programmazione dei videogiochi, si preferisce dividere la frequenza degli update del gioco (ups, update per second) dalla frequenza di rendering (fps, frame per second), per esempio per poter aggiornare il gioco a una frequenza maggiore rispetto a quella di generazione dei frame.
-
-Il Game Loop è il cuore di ogni videogioco ed è composto da due fasi principali:
-1. **Aggiornamento dello stato di gioco** (posizioni, collisioni, logica).
-2. **Rendering della scena aggiornata** sullo schermo.
-
-Questo ciclo si ripete continuamente per tutta la durata del gioco.
-
-## Threading e sincronizzazione
-
-Per garantire fluidità al gioco, spesso si utilizza un thread dedicato per il Game Loop. Il threading consente di separare l'esecuzione delle operazioni di gioco (aggiornamenti e rendering) da quelle del sistema operativo.
-
-```java
-@Override
-public void run() {
-    double drawInterval = 1000000000 / FPS; // intervallo tra ogni frame
-    double delta = 0;
-    long lastTime = System.nanoTime();
-    long currentTime;
-
-    while(gameThread != null) {
-        currentTime = System.nanoTime();
-        delta += (currentTime - lastTime) / drawInterval;
-        lastTime = currentTime;
-
-        if(delta >= 1) {
-            update(); // aggiorna la logica del gioco
-            repaint(); // richiama il metodo paintComponent
-            delta--;
-        }
-    }
-}
-```
-
-## Calcolo del Delta Time
-
-Il delta time è il tempo trascorso tra due frame consecutivi e viene utilizzato per aggiornare correttamente le posizioni e animazioni, indipendentemente dalla velocità del sistema su cui gira il gioco.
-
-### Esempio di calcolo del delta time:
-
-```java
-long lastTime = System.nanoTime();
-
-while(running) {
-    long currentTime = System.nanoTime();
-    float deltaTime = (currentTime - lastTime) / 1e9f; // tempo in secondi
-    lastTime = currentTime;
-
-    update(deltaTime); // logica aggiornata con deltaTime
-    render();
-}
-```
-
-## Classi principali
-
-- **`MainECS.java`**: Classe principale che gestisce inizializzazione e ciclo del gioco.
-- **`GamePanel.java`**: Pannello su cui vengono renderizzati gli elementi grafici del gioco.
-
-> Le classi complete sono disponibili nella cartella dei sorgenti del progetto.
 
 ## Riferimenti e fonti
 
