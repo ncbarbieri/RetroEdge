@@ -1,3 +1,11 @@
+/**
+ * RetroEdge Educational Game Engine
+ * 
+ * Copyright (c) 2025 Nicola Christian Barbieri
+ * Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
+ */
+
 package input;
 
 import java.awt.event.KeyEvent;
@@ -6,12 +14,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class InputHandler implements KeyListener {
+public class KeyboardInputHandler implements KeyListener {
 
     private final Set<Integer> pressedKeys = new HashSet<>();
     private final Set<Integer> releasedKeys = new HashSet<>();
 
-    public InputHandler() {
+    public KeyboardInputHandler() {
         // Inizializzazione
     }
 
