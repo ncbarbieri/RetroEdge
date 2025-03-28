@@ -1,3 +1,11 @@
+/**
+ * RetroEdge Educational Game Engine
+ * 
+ * Copyright (c) 2025 Nicola Christian Barbieri
+ * Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
+ */
+
 package main;
 
 import java.awt.Color;
@@ -9,7 +17,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
 import engine.Engine;
 import helpers.Logger;
 

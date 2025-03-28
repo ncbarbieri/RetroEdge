@@ -1,3 +1,11 @@
+/**
+ * RetroEdge Educational Game Engine
+ * 
+ * Copyright (c) 2025 Nicola Christian Barbieri
+ * Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
+ */
+
 package main;
 
 import java.awt.GraphicsDevice;
@@ -11,7 +19,7 @@ import javax.swing.JFrame;
 import engine.Engine;
 import engine.GameEngine;
 import helpers.Logger;
-import input.InputHandler;
+import input.KeyboardInputHandler;
 import input.MouseInputHandler;
 
 public class MainECS {
@@ -19,7 +27,7 @@ public class MainECS {
     private static final String GAME_TITLE = "Game Tutorial";
 
     public static void main(String[] args) {
-    	InputHandler inputHandler = new InputHandler();
+    	KeyboardInputHandler inputHandler = new KeyboardInputHandler();
     	MouseInputHandler mouseInputHandler = new MouseInputHandler();
     	Engine engine = new GameEngine(inputHandler, mouseInputHandler);
         GamePanel gamePanel = new GamePanel(engine);
