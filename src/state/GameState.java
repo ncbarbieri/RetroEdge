@@ -8,9 +8,9 @@
 
 package state;
 
+import engine.BaseSystem;
 import engine.Engine;
-import engine.entity.Entity;
-import engine.system.BaseSystem;
+import engine.Entity;
 import helpers.Logger;
 import transition.TransitionEffect;
 

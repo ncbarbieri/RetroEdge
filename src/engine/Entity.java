@@ -6,10 +6,10 @@
  * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
  */
 
-package engine.entity;
+package engine;
 
 import java.util.Map;
-import engine.component.Component;
+
 import enums.EntityType;
 import java.util.HashMap;
 

@@ -14,9 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import engine.component.Component;
-import engine.entity.Entity;
-import engine.system.BaseSystem;
+
 import enums.EngineState;
 import helpers.Logger;
 import input.KeyboardInputHandler;

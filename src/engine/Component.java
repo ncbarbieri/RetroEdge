@@ -6,9 +6,7 @@
  * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
  */
 
-package engine.component;
-
-import engine.entity.Entity;
+package engine;
 
 public abstract class Component {
 	protected Entity entity;

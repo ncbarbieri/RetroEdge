@@ -6,12 +6,11 @@
  * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
  */
 
-package engine.system;
+package engine;
 
 import java.awt.Graphics2D;
 import java.util.EnumMap;
-import engine.Engine;
-import engine.entity.Entity;
+
 import enums.EngineState;
 
 public abstract class BaseSystem {
