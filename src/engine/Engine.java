@@ -1,3 +1,11 @@
+/**
+ * RetroEdge Educational Game Engine
+ * 
+ * Copyright (c) 2025 Nicola Christian Barbieri
+ * Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
+ */
+
 package engine;
 
 import java.awt.Graphics2D;
@@ -11,7 +19,7 @@ import engine.entity.Entity;
 import engine.system.BaseSystem;
 import enums.EngineState;
 import helpers.Logger;
-import input.InputHandler;
+import input.KeyboardInputHandler;
 import input.MouseInputHandler;
 import state.GameState;
 import transition.TransitionEffect;
@@ -24,12 +32,12 @@ public abstract class Engine {
     private final List<Entity> entitiesToAdd = new ArrayList<>();
     private final List<BaseSystem> systems = new ArrayList<>();
     private final Comparator<BaseSystem> systemComparator;
-    private final InputHandler inputHandler;
+    private final KeyboardInputHandler inputHandler;
     private final MouseInputHandler mouseInputHandler;
     private TransitionEffect transitionEffect;
     private boolean debug = false;
 
-    public Engine(InputHandler inputHandler, MouseInputHandler mouseInputHandler) {
+    public Engine(KeyboardInputHandler inputHandler, MouseInputHandler mouseInputHandler) {
         this.inputHandler = inputHandler;
         this.mouseInputHandler = mouseInputHandler;
         this.systemComparator = Comparator.comparingInt(BaseSystem::getPriority);
@@ -283,7 +291,7 @@ public abstract class Engine {
         }
     }
 
-    public InputHandler getInputHandler() {
+    public KeyboardInputHandler getInputHandler() {
         return inputHandler;
     }
 
