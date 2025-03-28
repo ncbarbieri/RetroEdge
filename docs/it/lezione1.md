@@ -1,4 +1,4 @@
-# Lezione 2
+# Lezione 1
 
 # Il punto di ingresso: `MainECS.java`
 
