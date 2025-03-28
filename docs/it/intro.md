@@ -1,11 +1,11 @@
-# Lezione 1: Introduzione agli ARPG
+# Introduzione agli ARPG
 
 # Storia dei videogiochi: dalle origini alle icone a 16 bit
 
 ## Dalle prime sperimentazioni accademiche alla nascita delle console (anni ’40 – primi ’70)
 
 - **Nimatron (1939–1940)**  
-  Ideato da Edward Condon, era un dispositivo a relè progettato per il gioco da tavolo *Nim*, presentato alla Fiera Mondiale di New York. Pur non essendo un “videogioco” vero e proprio, è un precursore dei futuri giochi elettronici.
+  Ideato da Edward Condon, era un dispositivo a relè progettato per il gioco da tavolo <a href="https://it.wikipedia.org/wiki/Nim">Nim</a>, presentato alla Fiera Mondiale di New York. Pur non essendo un “videogioco” vero e proprio, è un precursore dei futuri giochi elettronici.
 
 <div align="center">
   <img src="https://upload.wikimedia.org/wikipedia/en/1/1b/Nimatron_Photograph_1940.jpg" alt="Nimatron" width="400"/>
