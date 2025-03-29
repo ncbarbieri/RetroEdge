@@ -1,0 +1,79 @@
+@startuml
+
+' === PACKAGE: CORE ENGINE ===
+package "Engine Core" {
+    class Engine {
+        - EngineStateManager stateManager
+        - GameState currentState
+        - GameState nextState
+        - List<Entity> entities
+        - List<BaseSystem> systems
+        - TransitionEffect transitionEffect
+        - KeyboardInputHandler inputHandler
+        - MouseInputHandler mouseInputHandler
+        - boolean debug
+        - boolean isPaused
+        --
+        + update(deltaTime: float)
+        + render(g: Graphics2D)
+        + addEntity(e: Entity)
+        + addSystem(s: BaseSystem)
+        + setNextState(state: GameState)
+        + setDebug(debug: boolean)
+        + getDebugInfo(): String
+    }
+
+    class EngineStateManager {
+        - EngineState currentState
+        + requestStateChange(newState: EngineState)
+        + getCurrentState(): EngineState
+    }
+
+    enum EngineState {
+        STARTING
+        ENTERING
+        EXITING
+        RUNNING
+        PAUSED
+        SHOWING_DIALOG
+        CUTSCENE
+    }
+}
+
+' === PACKAGE: ECS ===
+package "ECS" {
+    abstract class BaseSystem {
+        - Engine engine
+        --
+        + update(deltaTime: float)
+        + render(g: Graphics2D)
+        + getPriority(): int
+        + shouldUpdateInState(state: EngineState): boolean
+    }
+
+    class Entity {
+        - String name
+        - int id
+        - boolean alive
+        - Map<Component, Component> components
+        --
+        + addComponent(c: Component)
+        + getComponent(type: Class)
+        + isAlive(): boolean
+    }
+
+    abstract class Component {
+        - Entity entity
+        --
+        + getParentEntity(e: Entity)
+    }
+}
+
+' === RELAZIONI ===
+Engine *-- EngineStateManager
+Engine o-- Entity
+Engine o-- BaseSystem
+Entity --> Component
+EngineStateManager --> EngineState
+
+@enduml
