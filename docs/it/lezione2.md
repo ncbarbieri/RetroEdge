@@ -204,7 +204,7 @@ L'engine tiene traccia dello stato attuale (`currentState`) e di quello futuro (
 
 ### Gestione entità
 
-Le entità attive sono contenute in una lista `entities`. Per evitare problemi durante l'iterazione (modifica concorrente), vengono utilizzate due liste aggiuntive:
+Le entità attive sono contenute in un `ArrayList` `entities`. Per evitare problemi durante l'iterazione (modifica concorrente), vengono utilizzate due liste aggiuntive:
 
 - `entitiesToAdd` per le entità in attesa di essere aggiunte.
 - `entitiesToRemove` per quelle marcate come morte (`!isAlive()`).
@@ -314,3 +314,8 @@ La classe astratta `Engine` è una struttura flessibile che consente di personal
 - **Gestione dell'Input**: `Engine` fornisce accesso agli handler per tastiera e mouse. In un’implementazione completa, può delegare la gestione degli eventi allo `GameState` corrente, se l'input è abilitato, permettendo una risposta personalizzata a seconda del contesto di gioco.
 
 - **Gioco in pausa**: Il metodo `isPaused()` fornisce uno stato booleano che indica se il gioco è attualmente in pausa. Quando il gioco è in pausa, il metodo `update` non viene eseguito. Il metodo `setPaused(boolean isPaused)` permette di mettere in pausa o riprendere il gioco cambiando il valore della variabile `isPaused`. Questo può essere attivato, ad esempio, alla pressione del tasto pausa o quando la finestra perde il focus. 
+
+## Diagramma delle classi
+
+![Diagramma UML](engineUML.png)
+[Visualizza il sorgente PlantUML](engine.puml)
