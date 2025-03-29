@@ -13,7 +13,7 @@
 
 ## 1. Introduzione alla struttura del progetto
 Nella lezione precedente abbiamo visto come `MainECS` si occupi di avviare il gioco, creando la finestra (`GamePanel`) e il motore di gioco (`Engine`). In questa lezione, ci focalizziamo sulla **struttura interna** dell’engine, dove risiede l’**architettura ECS**:  
-- **Entity**: oggetti del gioco (personaggi, proiettili, alberi, ecc.).  
+- **Entity**: oggetti del gioco (personaggi, proiettili, NPC, ecc.).  
 - **Component**: dati specifici associati alle entità (es. posizione, sprite, statistiche di salute, ecc.).  
 - **System**: logica che elabora determinate componenti (es. sistema di movimento, sistema di rendering, AI, fisica, ecc.).  
 
@@ -61,7 +61,7 @@ Usando ECS, invece:
 1. Le entità sono aggregate dinamicamente con componenti per definire il loro comportamento e stato. Questo permette una aggregazione flessibile, dove le caratteristiche di un oggetto possono essere aggiunte, rimosse o modificate a runtime senza dover cambiare la gerarchia di classi.
 2. I componenti possono essere riutilizzati tra diverse entità, promuovendo il riutilizzo del codice. La separazione della logica di gioco nei sistemi, che operano su componenti, facilita anche la manutenibilità poiché le modifiche a un sistema o componente hanno meno probabilità di influenzare altre parti del codice.
 3. Si possono combinare componenti in modi nuovi e interessanti senza la necessità di creare nuove classi per ogni possibile combinazione. Ciò riduce significativamente il numero di classi necessarie.
-4. Si possono avere miglioramenti delle performance, specialmente nei videogiochi, grazie alla sua natura orientata ai dati. I sistemi possono essere progettati per iterare sugli array di componenti in modo contiguo, ottimizzando l'uso della cache della CPU e riducendo i colpi di cache miss.
+4. Si possono avere miglioramenti delle performance, specialmente nei videogiochi, grazie alla sua natura orientata ai dati. I sistemi possono essere progettati per iterare sugli array di componenti in modo contiguo, ottimizzando l'uso della cache della CPU e riducendo i cache miss.
 
 ### Concetti chiave
 - **Entity**: Le entità sono oggetti leggeri identificati da ID unici, dei contenitori per i componenti.
@@ -135,111 +135,182 @@ La sintassi ```<T extends Component>``` è un uso dei Generics in Java, che perm
 - ```<T```: Questo indica che si sta definendo un parametro di tipo generico T. È una convenzione chiamare il parametro di tipo generico con una singola lettera maiuscola. T sta per "Type".
 - ```extends Component>```: Questa parte specifica che il tipo T deve essere Component o una sua sottoclasse. In pratica, ciò restringe l'uso di T ai tipi che sono compatibili con Component. Questo è noto come bounding del tipo.
 
-Quando usiamo ```<T extends Component>``` nella definizione di un metodo, come in ```addComponent(T component)```, stiamo dicendo che il metodo accetta un parametro di qualsiasi classe che estende Component. Class<T> è invece un oggetto che rappresenta le informazioni su di una classe (per semplicità il tipo di classe) durante l’esecuzione. Ogni classe caricata dal classloader ha un'istanza corrispondente di Class che descrive il tipo della classe, incluse informazioni come il nome della classe, i suoi metodi, campi, annotazioni, superclassi, interfacce implementate, ecc. Ad esempio, un'istanza di Class<String> rappresenta le informazioni di tipo per la classe String. 
+Quando usiamo ```<T extends Component>``` nella definizione di un metodo, come in ```addComponent(T component)```, stiamo dicendo che il metodo accetta un parametro di qualsiasi classe che estende Component. ```Class<T>``` è invece un oggetto che rappresenta le informazioni su di una classe (per semplicità il tipo di classe) durante l’esecuzione. Ogni classe caricata dal classloader ha un'istanza corrispondente di Class che descrive il tipo della classe, incluse informazioni come il nome della classe, i suoi metodi, campi, annotazioni, superclassi, interfacce implementate, ecc. Ad esempio, un'istanza di ```Class<String>``` rappresenta le informazioni di tipo per la classe String. 
 
 Nell'ambito del pattern ECS, ```Class<T>``` viene utilizzato come chiave per mappare i tipi di componenti alle loro istanze. Questo utilizzo sfrutta due aspetti importanti di ```Class<T>```:
-- Identificatore Unico: Ogni classe in Java ha un unico oggetto Class associato. Ciò significa che possiamo usare Class come identificatore univoco in una mappa per rappresentare i diversi tipi di componenti.
-- Tipo Sicuro: Utilizzando Class<T> come chiave, possiamo assicurarci che il tipo di componente che stiamo recuperando dalla mappa sia del tipo corretto, grazie ai generics. Questo previene errori di casting a runtime e migliora la sicurezza.
+- **Identificatore Unico**: Ogni classe in Java ha un unico oggetto Class associato. Ciò significa che possiamo usare Class come identificatore univoco in una mappa per rappresentare i diversi tipi di componenti.
+- **Tipo Sicuro**: Utilizzando ```Class<T>``` come chiave, possiamo assicurarci che il tipo di componente che stiamo recuperando dalla mappa sia del tipo corretto, grazie ai generics. Questo previene errori di casting a runtime e migliora la sicurezza.
 
-La scrittura ```Map<Class<? extends Component>, Component>``` è utilizzata per memorizzare i componenti associati a un'entità. Una mappa in Java memorizza coppie chiave-valore e consente di recuperare, aggiungere o rimuovere valori rapidamente utilizzando la chiave. La sintassi ```Map<tipoChiave, tipoValore>``` prevede due parametri di tipo: il tipo della chiave e il tipo del valore. Class<? extends Component> viene usato come tipo della chiave. Come detto in precedenza, Class rappresenta le informazioni su una classe durante l’esecuzione dell’applicazione. L'uso della chiave Class<? extends Component> permette di usare il tipo della classe che estende Component come identificatore univoco per la classe stessa nella mappa. Il tipo del valore è ovviamente Component o una delle sue sottoclassi. In sintesi: ogni chiave, rappresentata dal tipo della classe, è mappata a un'istanza della classe stessa, che deve estendere Component. Questo approccio garantisce che ogni tipo di componente possa essere associato univocamente a un'entità.
+Nella classe Entity, la scrittura ```Map<Class<? extends Component>, Component>``` è utilizzata per memorizzare i componenti associati a un'entità. Una mappa in Java memorizza coppie chiave-valore e consente di recuperare, aggiungere o rimuovere valori rapidamente utilizzando la chiave. La sintassi ```Map<tipoChiave, tipoValore>``` prevede due parametri di tipo: il tipo della chiave e il tipo del valore. ```Class<? extends Component>``` viene usato come tipo della chiave. Come detto in precedenza, Class rappresenta le informazioni su una classe durante l’esecuzione dell’applicazione. L'uso della chiave ```Class<? extends Component>``` permette di usare il tipo della classe che estende Component come identificatore univoco per la classe stessa nella mappa. Il tipo del valore è ovviamente Component o una delle sue sottoclassi. In sintesi: ogni chiave, rappresentata dal tipo della classe, è mappata a un'istanza della classe stessa, che deve estendere Component. Questo approccio garantisce che ogni tipo di componente possa essere associato univocamente a un'entità.
 
 L’HashMap è una struttura dati che implementa l'interfaccia Map di Java. L'uso di un HashMap per memorizzare i componenti di un'entità offre diversi vantaggi:
-- Accesso in un tempo costante: L'HashMap fornisce, in media, accesso, inserimento e rimozione in un tempo che non dipende dal numero di oggetti contenuti, come per esempio nella ricerca semplice in un array, rendendolo efficiente per operazioni frequenti sui componenti.
-- Sicurezza sul tipo di classe: Utilizzando generics, l'HashMap garantisce che solo i componenti del tipo corretto possano essere aggiunti o recuperati, prevenendo errori a runtime.
-- Flessibilità: Permette di aggiungere o rimuovere componenti da un'entità in modo dinamico a runtime, offrendo grande flessibilità nel gestire lo stato e il comportamento delle entità nel gioco.
+- **Accesso in un tempo costante**: L'HashMap fornisce, in media, accesso, inserimento e rimozione in un tempo che non dipende dal numero di oggetti contenuti, come per esempio nella ricerca semplice in un array, rendendolo efficiente per operazioni frequenti sui componenti.
+- **Sicurezza sul tipo di classe**: Utilizzando generics, l'HashMap garantisce che solo i componenti del tipo corretto possano essere aggiunti o recuperati, prevenendo errori a runtime.
+- **Flessibilità**: Permette di aggiungere o rimuovere componenti da un'entità in modo dinamico a runtime, offrendo grande flessibilità nel gestire lo stato e il comportamento delle entità nel gioco.
+
 
 ### 4.2 `Component.java`
 
-Component è una classe astratta che definisce i dati o lo stato associato a una Entity. Ogni componente specifico (posizione, salute, velocità, ecc.) estenderà questa classe astratta, fornendo i dati necessari per un particolare aspetto o funzionalità dell'entità.
+Component è una classe astratta che definisce i dati o lo stato associato a una Entity. Ogni componente specifico (posizione, salute, velocità, ecc.) estenderà questa classe astratta, fornendo i dati necessari per un particolare aspetto o funzionalità dell'entità. Al costruttore viene passata l'Entity a cui appartiene il Component, per poterla recuperare successivamente e accedere agli altri componenti. 
 
 ```java
 public abstract class Component {
-    // Potrebbe contenere campi comuni o essere vuota
+    protected Entity entity;
+
+    public Component(Entity entity) {
+        this.entity = entity;
+    }
+
+    public Entity getParentEntity() {
+        return entity;
+    }
 }
 ```
 
 ### 4.3 `BaseSystem.java`
 
-BaseSystem è una classe astratta che rappresenta i sistemi nel pattern ECS. Ogni sistema concreto estenderà questa classe per implementare la logica specifica di aggiornamento (update) e di rendering (render). I sistemi possono essere ordinati o prioritizzati in base al campo priority, consentendo un controllo fine sull'ordine di aggiornamento e rendering. Il metodo che si occupa del rendering prende come parametri anche le coordinate x e y dell’offset, che serve a stabilire la porzione della mappa che deve essere disegnata sullo schermo.
+BaseSystem è una classe astratta che rappresenta i sistemi nel pattern ECS. Ogni sistema concreto estenderà questa classe per implementare la logica specifica di aggiornamento (update) e di rendering (render). I sistemi possono essere ordinati o prioritizzati in base al campo priority, consentendo un controllo fine sull'ordine di aggiornamento e rendering. Il metodo che si occupa del rendering prende come parametri anche le coordinate x e y dell’offset, che serve a stabilire la porzione della mappa che deve essere disegnata sullo schermo. Il metodo update, invece, prende come parametro l'intervallo di tempo trascorso dal precedente update.
 
 ```java
 public abstract class BaseSystem {
-    public abstract void update(Engine engine, double dt);
-    public abstract void render(Engine engine, Graphics2D g);
+	protected Engine engine;
+	protected int priority;
+	public BaseSystem(Engine engine, int priority) {
+		super();
+		this.engine = engine;
+		this.priority = priority;
+	}
+	public abstract void render(Graphics2D g, int xOffset, int yOffset);
+	public abstract void update(float deltaTime);
+	public int getPriority() {
+		return priority;
+	}
 }
 ```
+# 4.4 `Engine.java`
 
-### 4.4 `Engine.java`
+La classe `Engine` è il cuore del framework ECS. Gestisce:
 
-La classe astratta Engine è una struttura flessibile che consente di personalizzare il progetto a seconda delle necessità. I metodi principali sono:
-- Metodo init astratto: Serve come punto di ingresso per configurare l'engine prima che inizi l'esecuzione del gioco. Ogni sottoclasse concreta di Engine deve implementare questo metodo per impostare le condizioni iniziali, come la creazione di entità di gioco iniziali, la configurazione dei sistemi o la preparazione dello stato iniziale del gioco.
-- Gestione dello Stato: Engine gestisce gli stati di gioco tramite le variabili currentState e nextState, consentendo transizioni fluide tra diversi stati, come menu principale, gioco in corso e menu di pausa.
-- Cambio di Stato: il metodo setNextState(GameState nextState) permette di programmare il cambio di stato del gioco alla successiva chiamata del metodo update, assegnando un valore all’attributo nextState. Impostando inputEnabled a false, si previene la gestione degli input durante la transizione, evitando possibili conflitti o comportamenti indesiderati mentre lo stato corrente viene pulito (cleanup) e il nuovo stato inizializzato (init).
-- Aggiunta e Rimozione di Entity: Le entità da aggiungere sono accumulate in entitiesToAdd e poi effettivamente aggiunte all'elenco delle entità attive all'inizio di ogni ciclo di aggiornamento per evitare problemi di concorrenza. Le entità non più "vive" vengono rimosse.
-- Aggiunta di Sistemi: I sistemi vengono aggiunti e ordinati in base alla loro priorità, garantendo che la logica di gioco venga eseguita nell'ordine corretto.
-- Rendering Con Camera: Nel metodo render, l'Engine utilizza la Camera (se impostata) per determinare quale parte del mondo di gioco renderizzare, supportando giochi open world.
-- Gestione dell'Input: Engine implementa listener per tastiera e mouse, delegando la gestione degli eventi di input allo GameState corrente se l'input è abilitato. Questo permette di personalizzare la risposta agli input in base al contesto di gioco.
-- Gioco in pausa:  il metodo isPaused() fornisce uno stato booleano che indica se il gioco è attualmente in pausa. Quando il gioco è in pausa, il metodo update non viene eseguito. Il metodo setPaused(boolean isPaused) permette di mettere in pausa o riprendere il gioco cambiando il valore della variabile isPaused.  Questo metodo può essere chiamato in risposta a input specifici (come la pressione di un tasto di pausa) o eventi di gioco. Mettere il gioco in pausa è essenziale in molti scenari, come quando si apre un menu di pausa o quando il gioco perde il focus.
-Non ci resta che creare l’Engine specifico per il nostro gioco, implementando il metodo init() con tutto ciò che serve a inizializzare il gioco.
+- Le **entità** (`Entity`), ovvero gli oggetti del gioco.
+- I **sistemi** (`BaseSystem`), che implementano la logica.
+- Il **ciclo di vita** del gioco (stati, transizioni, inizializzazione, cleanup).
+- Gli **input** da tastiera e mouse.
+- Le **transizioni tra stati di gioco** tramite `TransitionEffect`.
+- La **gestione sicura e concorrente** di entità e sistemi tramite sezioni `synchronized`.
+
+### Stato e transizioni
+
+L'engine tiene traccia dello stato attuale (`currentState`) e di quello futuro (`nextState`). Le transizioni sono gestite con oggetti `TransitionEffect`, per animazioni in entrata/uscita.
+
+### Gestione entità
+
+Le entità attive sono contenute in una lista `entities`. Per evitare problemi durante l'iterazione (modifica concorrente), vengono utilizzate due liste aggiuntive:
+
+- `entitiesToAdd` per le entità in attesa di essere aggiunte.
+- `entitiesToRemove` per quelle marcate come morte (`!isAlive()`).
+
+### Gestione sistemi
+
+I sistemi vengono ordinati per **priorità** tramite un comparatore (`systemComparator`). Ogni sistema dichiara in quali stati deve aggiornarsi.
+
+### Input
+
+I riferimenti a `KeyboardInputHandler` e `MouseInputHandler` sono passati tramite costruttore e recuperabili con getter pubblici.
+
+---
+
+## Scheletro della classe `Engine`
 
 ```java
-public class Engine {
+public abstract class Engine {
+    // === Gestione Stati ===
+    private final EngineStateManager stateManager;
+    private GameState currentState, nextState;
+
+    // === Entità e Sistemi ===
     private final List<Entity> entities = new ArrayList<>();
+    private final List<Entity> entitiesToRemove = new ArrayList<>();
+    private final List<Entity> entitiesToAdd = new ArrayList<>();
     private final List<BaseSystem> systems = new ArrayList<>();
+    private final Comparator<BaseSystem> systemComparator;
 
-    public synchronized void addEntity(Entity e) {
-        entities.add(e);
+    // === Input ===
+    private final KeyboardInputHandler inputHandler;
+    private final MouseInputHandler mouseInputHandler;
+
+    // === Transizioni e Debug ===
+    private TransitionEffect transitionEffect;
+    private boolean debug = false;
+
+    // === Costruttore ===
+    public Engine(KeyboardInputHandler inputHandler, MouseInputHandler mouseInputHandler) {
+        ...
     }
 
-    public synchronized void removeEntity(Entity e) {
-        entities.remove(e);
-    }
+    // Metodo da implementare per l'inizializzazione personalizzata
+    protected abstract void init();
 
-    public synchronized void addSystem(BaseSystem system) {
-        systems.add(system);
-    }
-
-    public synchronized void removeSystem(BaseSystem system) {
-        systems.remove(system);
-    }
-
-    public void update(double dt) {
-        for (BaseSystem system : systems) {
-            system.update(this, dt);
-        }
+    // === Ciclo di aggiornamento ===
+    public void update(float deltaTime) {
+        ...
     }
 
     public void render(Graphics2D g) {
-        for (BaseSystem system : systems) {
-            system.render(this, g);
-        }
+        ...
     }
+
+    // === Gestione Stati ===
+    private void switchState() { ... }
+    private void handleTransition(float deltaTime) { ... }
+
+    // === Gestione Entità ===
+    private void removeDeadEntities() { ... }
+    public void addEntity(Entity entity) { ... }
+
+    // === Gestione Sistemi ===
+    public void addSystem(BaseSystem system) { ... }
+
+    // === Accesso e Utility ===
+    public void accessEntities(Consumer<List<Entity>> action) { ... }
+    public <T extends Component> void accessEntitiesWithComponent(...) { ... }
+    public void sortEntities(Comparator<Entity> comparator) { ... }
+
+    // === Input e Stato ===
+    public KeyboardInputHandler getInputHandler() { ... }
+    public MouseInputHandler getMouseInputHandler() { ... }
+    public GameState getGameState() { ... }
+    public EngineStateManager getStateManager() { ... }
+
+    // === Debug e Pulizia ===
+    public boolean isDebug() { ... }
+    public void setDebug(boolean debug) { ... }
+    public String getDebugInfo() { ... }
+    public void cleanup() { ... }
+
+    // === Focus finestra ===
+    public void windowFocusLost() { ... }
+    public void windowGainedFocus() { ... }
 }
 ```
 
 ---
 
-## 5. `HashMap` per l’associazione Entity-Component
+## Approfondimento: Ruolo e Funzionalità Principali
 
-- Accesso rapido per tipo
-- Flessibilità nella definizione dell’entità
-- Facilità di estensione
+La classe astratta `Engine` è una struttura flessibile che consente di personalizzare il progetto a seconda delle necessità. I metodi principali sono:
 
----
+- **Metodo `init` astratto**: Serve come punto di ingresso per configurare l'engine prima che inizi l'esecuzione del gioco. Ogni sottoclasse concreta di `Engine` deve implementare questo metodo per impostare le condizioni iniziali, come la preparazione dello stato iniziale del gioco.
 
-## 6. `ArrayList` per entità e sistemi
+- **Gestione dello Stato**: `Engine` gestisce gli stati di gioco tramite le variabili `currentState` e `nextState`, consentendo transizioni fluide tra diversi stati, come menu principale, gioco in corso e menu di pausa.
 
-Nel game loop:
+- **Cambio di Stato**: Il metodo `setNextState(GameState nextState)` permette di programmare il cambio di stato del gioco alla successiva chiamata del metodo `update`, assegnando un valore all’attributo `nextState`. Impostando `inputEnabled` a `false`, si previene la gestione degli input durante la transizione, evitando possibili conflitti o comportamenti indesiderati mentre lo stato corrente viene pulito (`cleanup`) e il nuovo stato inizializzato (`init`).
 
-```java
-engine.update(deltaTime);
-engine.render(g2D);
-```
+- **Aggiunta e Rimozione di Entity**: Le entità da aggiungere sono accumulate in `entitiesToAdd` e poi effettivamente aggiunte all'elenco delle entità attive all'inizio di ogni ciclo di aggiornamento per evitare problemi di concorrenza. Le entità non più "vive" vengono rimosse automaticamente tramite `removeDeadEntities()`.
 
----
+- **Aggiunta di Sistemi**: I sistemi vengono aggiunti alla lista `systems` e ordinati in base alla loro priorità (tramite `systemComparator`), garantendo che la logica di gioco venga eseguita nell'ordine corretto.
 
-## 7. Thread-safe e gestione concorrente
+- **Rendering con Camera**: Nel metodo `render`, l'engine può utilizzare la Camera (se implementata) per determinare quale parte del mondo di gioco visualizzare, supportando giochi open world e ambienti dinamici.
 
-- Uso di `synchronized`
-- Alternativa: accodare modifiche e applicarle dopo il loop
-- Strutture dati thread-safe se necessario
+- **Gestione dell'Input**: `Engine` fornisce accesso agli handler per tastiera e mouse. In un’implementazione completa, può delegare la gestione degli eventi allo `GameState` corrente, se l'input è abilitato, permettendo una risposta personalizzata a seconda del contesto di gioco.
+
+- **Gioco in pausa**: Il metodo `isPaused()` fornisce uno stato booleano che indica se il gioco è attualmente in pausa. Quando il gioco è in pausa, il metodo `update` non viene eseguito. Il metodo `setPaused(boolean isPaused)` permette di mettere in pausa o riprendere il gioco cambiando il valore della variabile `isPaused`. Questo può essere attivato, ad esempio, alla pressione del tasto pausa o quando la finestra perde il focus. 
