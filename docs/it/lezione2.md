@@ -187,7 +187,117 @@ public abstract class BaseSystem {
 	}
 }
 ```
-# 4.4 `Engine.java`
+## 4.4 `EngineState.java`
+
+L'enum `EngineState` rappresenta **i vari stati globali** in cui può trovarsi il motore di gioco (`Engine`).  
+Ogni stato ha un significato specifico e regola quali sistemi o interazioni sono attivi nel ciclo di gioco.
+
+```java
+public enum EngineState {
+    STARTING,
+    ENTERING,
+    EXITING,
+    RUNNING,
+    PAUSED,
+    SHOWING_DIALOG,
+    CUTSCENE
+}
+```
+
+### Significato degli stati:
+
+| Stato             | Descrizione |
+|-------------------|-------------|
+| `STARTING`        | Stato iniziale del motore dopo l’avvio. |
+| `ENTERING`        | Transizione in ingresso verso un nuovo `GameState` (es. animazione fade-in). |
+| `EXITING`         | Transizione in uscita dal `GameState` attuale (es. salvataggio, animazione fade-out). |
+| `RUNNING`         | Stato operativo principale del gioco: il gioco è attivo e giocabile. |
+| `PAUSED`          | Stato in cui il gioco è temporaneamente sospeso (es. menu pausa). |
+| `SHOWING_DIALOG`  | Stato in cui viene mostrata una finestra di dialogo o interazione modale. |
+| `CUTSCENE`        | Stato speciale per scene animate/scriptate non interattive. |
+
+---
+
+## 4.5 `EngineStateManager.java`
+
+La classe `EngineStateManager` ha il compito di **gestire lo stato corrente del motore** e di **validare le transizioni** tra stati secondo regole predefinite.
+
+```java
+public class EngineStateManager {
+    private EngineState currentState;
+    private final Map<EngineState, Set<EngineState>> validTransitions;
+}
+```
+
+### Funzionalità principali
+
+#### Inizializzazione con stato iniziale
+
+```java
+new EngineStateManager(EngineState.STARTING)
+```
+
+Viene creato con uno stato iniziale (`STARTING`, di default) e una mappa delle transizioni valide tra stati.
+
+---
+
+### Transizioni valide
+
+Nel metodo `initializeValidTransitions()` vengono definite le **transizioni ammesse** da uno stato all'altro.  
+Esempio: dallo stato `RUNNING` si può passare a `PAUSED`, `SHOWING_DIALOG`, `CUTSCENE` o `EXITING`.
+
+Queste regole vengono salvate in una mappa:
+
+```java
+Map<EngineState, Set<EngineState>> validTransitions
+```
+
+---
+
+### Cambio di stato
+
+Per cambiare stato, si usa:
+
+```java
+requestStateChange(EngineState newState)
+```
+
+Il metodo verifica che la transizione sia permessa, e solo in quel caso cambia `currentState`.  
+Le transizioni non valide vengono bloccate e loggate.
+
+---
+
+### Metodo di verifica
+
+Internamente usa:
+
+```java
+private boolean canTransitionTo(EngineState newState)
+```
+
+Per controllare che `newState` sia presente nell’insieme delle transizioni ammesse dallo stato attuale.
+
+---
+
+### Recuperare lo stato attuale
+
+```java
+EngineState getCurrentState()
+```
+
+Restituisce lo stato corrente del motore.
+
+---
+
+## Esempio di utilizzo
+
+```java
+EngineStateManager manager = new EngineStateManager(EngineState.STARTING);
+manager.requestStateChange(EngineState.ENTERING); // valida
+manager.requestStateChange(EngineState.CUTSCENE); // non valida → log di errore
+```
+
+# 4.6 `Engine.java`
 
 La classe `Engine` è il cuore del framework ECS. Gestisce:
 
