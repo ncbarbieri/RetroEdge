@@ -29,21 +29,23 @@ La struttura tipica di un progetto ECS è la seguente (indicativa):
 root/
 ├─ src/
 │   ├─ engine/
-│   │   ├─ Engine.java       // Gestisce l’insieme di entità e sistemi
-│   │   ├─ Entity.java       // Classe che rappresenta un’entità
-│   │   ├─ Component.java    // Classe astratta base per i componenti
-│   │   ├─ BaseSystem.java   // Classe astratta da cui derivano i vari sistemi
-│   │   ├─ systems/          // Package con le classi dei sistemi (MovementSystem, RenderSystem, ecc.)
-│   │   └─ components/       // Package con le classi ddei componenti (MotionComponent, KeyInputComponent, ecc.)
+│   │   ├─ Engine.java       		// Gestisce l’insieme di entità e sistemi
+│   │   ├─ EngineStateManager.java      // Gestisce l’insieme di entità e sistemi
+│   │   ├─ Entity.java       		// Classe che rappresenta un’entità
+│   │   ├─ Component.java    		// Classe astratta base per i componenti
+│   │   ├─ BaseSystem.java   		// Classe astratta da cui derivano i vari sistemi
+│   │   ├─ systems/          		// Package con le classi dei sistemi (MovementSystem, RenderSystem, ecc.)
+│   │   └─ components/       		// Package con le classi ddei componenti (MotionComponent, KeyInputComponent, ecc.)
 │   ├─ enums/
-│   │   ├─ EntityType.java   // Enum per definire i tipi di Entity
+│   │   ├─ EntityType.java   		// Enum per definire i tipi di Entity
+│   │   ├─ EngineState.java  		// Enum per definire gli stati dell'Engine
 │   │   └─ …
 │   ├─ main/
-│   │   ├─ MainECS.java      // Punto di ingresso dell’applicazione
+│   │   ├─ MainECS.java      		// Punto di ingresso dell’applicazione
 │   │   ├─ GamePanel.java
 │   │   └─ …
 │   └─ …
-├─ res/                      // Risorse grafiche (immagini, sprite sheet, ecc.)
+├─ res/                      		// Risorse grafiche (immagini, sprite sheet, ecc.)
 └─ …
 ```
 
