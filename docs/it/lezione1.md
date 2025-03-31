@@ -139,15 +139,6 @@ window.addWindowListener(new WindowAdapter() {
 
 ---
 
-## Esercizio Proposto
-
-1. Modifica il titolo della finestra in **"My First Game!"**.
-2. Aggiungi un log: `System.out.println("Fullscreen attivato!")` alla modalità fullscreen.
-3. Premi `F` durante l’esecuzione per testare il fullscreen.
-4. Aggiungi un commento a ogni blocco del `main`.
-
----
-
 # Il cuore grafico: `GamePanel.java`
 
 ### Obiettivi
@@ -279,15 +270,6 @@ public void windowFocusLost() {
     engine.windowFocusLost();
 }
 ```
-
----
-
-## Esercizi
-
-1. Imposta dimensioni iniziali: **800x600**
-2. Aggiungi un messaggio di log nel metodo `updateGame()`
-3. Attiva/disattiva il debug con `engine.setDebug(true/false)`
-4. Ridimensiona la finestra e verifica lo scaling
 
 ---
 
