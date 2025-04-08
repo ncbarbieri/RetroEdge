@@ -42,8 +42,9 @@ Un **sprite sheet** è un’unica risorsa grafica (un file `.png` o `.jpg`) che 
    - Se abbiamo una sequenza, la sintassi `action:ATTACK:RIGHT:0-0,0-1,0-2,...` elenca i vari frame da disegnare in quell’ordine.
 
 ### 1.2 Esempio di file `.sprite`
-Ecco una sezione di esempio (come da richiesta):
+Ecco una sezione di esempio:
 
+```
 fileName:/spritesheet/player.png
 frameWidth:144
 frameHeight:144
@@ -56,6 +57,7 @@ action:ATTACK:RIGHT:0-0,0-1,0-2,0-3,0-4,0-5,0-6,0-7,0-8,0-9,0-10,0-11
 …
 action:WALK:DOWN:7-0,7-1,7-2,7-3,7-4,7-5,7-6,7-7
 action:FALL:DOWN:9-0,9-1,9-2
+```
 
 - `fileName:/spritesheet/player.png`: indica il percorso dell’immagine con tutti i frame del player.  
 - `frameWidth:144` e `frameHeight:144`: ogni frame è un quadrato 144×144 pixel.  
