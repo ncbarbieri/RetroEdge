@@ -264,10 +264,7 @@ All’atto pratico:
 
 ### 1.5 Classe SpriteComponent.java
 
-Questo componente rappresenta il “legame” tra un’entità e il suo sprite sheet (o animazioni). Le sue funzioni sono:
-- Prende come parametro lo **spritesheet** per prelevare tutti i frame e le informazioni di animazione.
-- Tiene traccia dello **stato corrente** (quale azione e direzione è selezionata in un determinato istante), e quindi del **frame corrente** da disegnare.
-- Definisce la **velocità** di animazione, il **timer** e altri parametri.
+Questo componente rappresenta il “legame” tra un’entità e il suo sprite sheet (o animazioni). 
 
 Esempio semplificato:
 
@@ -281,8 +278,7 @@ public class SpriteComponent extends Component {
     private int frameHeight;
     private Direction direction;
     private Action action;
-//  Flag indicating whether the animation should loop or play once
-    protected boolean looping;         
+    protected boolean looping; //  Flag indicating whether the animation should loop or play once         
     private Runnable onAnimationEnd;
 
     public SpriteComponent(Entity entity, CharacterSpritesheet spritesheet, float frameDuration, boolean looping) {
@@ -311,17 +307,17 @@ Questo SpriteComponent verrà aggiornato dall’AnimationSystem per cambiare il 
 Le funzionalità principali sono:
 
 1. Prendere il CharacterSpritesheet come parametro del costruttore:
-   - Questo ci fornisce l’array images[action][direction][frame] e le bounding box, se necessario.
+   - Questo ci fornisce l’array ```images[action][direction][frame]``` e le bounding box, se necessario.
 2. Gestire l’azione e la direzione correnti:
-   - currentAction (es: IDLE, WALK, ATTACK).
-   - currentDirection (es: UP, DOWN, LEFT, RIGHT).
+   - currentAction (es: ```IDLE```, ```WALK```, ```ATTACK```).
+   - currentDirection (es: ```UP```, ```DOWN```, ```LEFT```, ```RIGHT```).
 3. Tempi di animazione e frame:
-   - frameTime definisce quanto durano i frame (es: se frameTime = 0.08f, ogni 0.08 secondi passiamo al frame successivo).
-   - elapsed accumula il tempo trascorso dall’ultimo cambio di frame.
-   - currentFrameIndex indica quale frame stiamo usando.
+   - ```frameDuration``` definisce quanto durano i frame (es: se frameDuration = 0.08f, ogni 0.08 secondi passiamo al frame successivo).
+   - ```elapsedTime``` accumula il tempo trascorso dall’ultimo cambio di frame.
+   - ```currentFrame``` indica quale frame stiamo usando.
 4. Looping:
-   - Se true, quando arriviamo all’ultimo frame, torniamo a 0.
-   - Se false, restiamo sull’ultimo frame (animazione “one-shot”).
+   - Se ```true```, quando arriviamo all’ultimo frame, torniamo all'indice 0.
+   - Se ```false```, restiamo sull’ultimo frame (animazione “one-shot”).
 
 
 ### 1.5 Classe AnimationSystem.java
