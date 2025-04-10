@@ -139,7 +139,6 @@ inputSystem.addDebouncedAction(“PAUSE”);
 L’azione di debug, invece, può essere mappata sul tasto 0 della tastiera:
 
 ```java
-
 inputSystem.bindCustomAction(“DEBUG”, KeyEvent.VK_0, deltaTime -> {
     if (engine.isDebug()) {
         engine.setDebug(false);
@@ -152,6 +151,115 @@ inputSystem.addDebouncedAction(“DEBUG”);
 ```
 
 Questa callback controlla se il motore è in modalità debug. Se sì la disabilita, altrimenti la abilita. Anche questa azione dev'essere “debounced”, altrimenti la modalità di debug continuerebbe ad attivarsi e disattivarsi mentre il tasto rimane premuto.
+
+---
+## 2 Gestione del movimento
+
+Il MotionSystem si occupa di aggiornare la posizione e talvolta la velocità delle entità che possiedono un MotionComponent. In base alla presenza di altre componenti (KeyInputComponent, NPCComponent, AttackComponent, ecc.), il movimento può essere gestito diversamente (player, NPC, entità generiche).
+
+Il MotionComponent, invece, conserva le informazioni fondamentali su posizione, velocità e parametri di accelerazione/decelerazione di un’entità.
+
+### 2.1	MotionComponent
+
+La classe MotionComponent estende Component e contiene vari campi numerici per la gestione del movimento:
+- x, y: posizione corrente dell’entità.
+- oldX, oldY: posizione precedente, utile per calcolare spostamenti o fare rollback se necessario.
+- vx, vy: velocità in orizzontale e verticale.
+- maxSpeed: velocità massima consentita.
+- acceleration, deceleration: parametri usati per aumentare o diminuire gradualmente la velocità.
+
+Struttura del costruttore:
+```java
+public MotionComponent(Entity entity, float x, float y, float maxSpeed) {
+    super(entity);
+    this.x = this.oldX = x;
+    this.y = this.oldY = y;
+    this.maxSpeed = maxSpeed;
+    this.vx = this.vy = 0;
+    this.acceleration = 1000f;
+    this.deceleration = 1000f;
+}
+```
+
+Il metodo move(float deltaX, float deltaY) aggiorna la posizione x,y e salva i valori precedenti in oldX, oldY. Durante l’update, si può chiamare per esempio `move(vx * deltaTime, vy * deltaTime)`.
+
+### 2.2	MotionSystem
+
+Il MotionSystem estende BaseSystem e ha priorità 2, ciò significa che è tra i primi a essere aggiornato (dopo gli input, che hanno priorità 1). Nel metodo initStateUpdateMap, si decide in quali stati del gioco aggiornare la posizione (RUNNING, CUTSCENE, ENTERING…). Il cuore del sistema è il metodo `updateEntity(Entity entity, float deltaTime)`, che ha la seguente struttura:
+
+```java
+protected void updateEntity(Entity entity, float deltaTime) {
+MotionComponent mc = entity.getComponent(MotionComponent.class);
+if (mc == null) return;  // Se l’entità non ha MotionComponent, non facciamo nulla.
+
+// 1) Verifica attacchi o lancio di proiettile:
+AttackComponent ac = entity.getComponent(AttackComponent.class);
+ThrowProjectileComponent tpc = entity.getComponent(ThrowProjectileComponent.class);
+boolean isPerformingAction = (ac != null && ac.isAttacking()) ||
+                             (tpc != null && tpc.isThrowing());
+if (isPerformingAction) {
+    // Se l’entità sta attaccando o lanciando, blocchiamo il movimento
+    mc.setVx(0);
+    mc.setVy(0);
+    // Aggiorna la posizione con spostamento zero
+    mc.move(0, 0);
+    return;
+}
+
+// 2) In base alle componenti specifiche:
+if (entity.hasComponent(KeyInputComponent.class)) {
+    // Entità gestita come “player”
+    handlePlayerMovement(entity, deltaTime, mc);
+    return;
+}
+
+if (entity.hasComponent(NPCComponent.class)) {
+    // Entità gestita come “NPC”
+    handleNPCMovement(entity, deltaTime);
+    return;
+}
+
+// 3) Altrimenti gestione “generica”
+handleGenericMovement(entity, deltaTime, mc);
+
+}
+```
+
+In sintesi:
+- Se l’entità sta eseguendo un attacco o un lancio di proiettile, imponiamo vx=vy=0 (nessun movimento).
+- Se ha il componente KeyInputComponent, la tratteremo come player.
+- Se ha il componente NPCComponent, la tratteremo come NPC.
+- Altrimenti, applichiamo un semplice aggiornamento generico.
+
+Il metodo `handlePlayerMovement(…)` è specifico per gestire il movimento del giocatore. Legge i comandi da KeyInputComponent (moveLeft, moveRight, ecc.) e aggiorna velocità e posizione usando il metodo di Eulero semi-implicito (anche chiamato “symplectic Euler”), una variante del classico metodo di Eulero per risolvere numericamente le equazioni del moto, con il vantaggio di essere più stabile in alcune situazioni (specialmente nei sistemi fisici semplificati).
+
+Il metodo di Eulero “classico” aggiornerebbe posizione e velocità in questo ordine:
+1.	position = position + velocity * deltaTime
+2.	velocity = velocity + acceleration * deltaTime
+
+Il metodo semi-implicito (o “symplectic”) inverte l’ordine:
+1.	velocity = velocity + acceleration * deltaTime
+2.	position = position + velocity * deltaTime
+
+La differenza chiave è che, nel metodo semi-implicito, quando calcoliamo la nuova posizione usiamo già la velocità aggiornata. Questo riduce alcuni problemi di instabilità che possono emergere con Eulero esplicito, soprattutto se si hanno sistemi con accelerazioni variabili.
+
+Nel contesto di un gioco 2D:
+- “acceleration” può dipendere dalla gravità, dai tasti premuti, dall’attrito, ecc.
+- “velocity” e “position” sono i valori contenuti nel MotionComponent.
+
+Alla fine di ogni frame, si calcola:
+1.	`velocity.x += acceleration.x * deltaTime` e `velocity.y += acceleration.y * deltaTime`
+2.	`position.x += velocity.x * deltaTime` e `position.y += velocity.y * deltaTime`
+
+In molti giochi 2D, questa formula è sufficiente per generare movimenti fluidi e relativamente stabili. Le azioni che il MotionSystem compie sono le seguenti:
+
+- Verifica quali tasti per il movimento orizzontale sono attivi (es. `keyInput.isActionActive(InputAction.MOVE_LEFT)`).
+- Se per esempio moveLeft è true (e moveRight no), `vx -= acceleration * deltaTime`. Viceversa per moveRight.
+- Se nessun tasto è premuto, viene applicata la decelerazione.
+- Se è presente una GravityComponent (scenario platform), la velocità verticale è gestita dall'azione salto (InputAction.JUMP) e dalla gravità.
+- Nel caso di uno scenario top-down, moveUp e moveDown vengono gestite analogamente a moveLeft e moveRight. 
+- Se la velocità risultante supera maxSpeed, viene limitata per evitare che continui ad aumentare all'infinito.
+- Infine, viene aggiornato il MotionComponent: `mc.setVx(vx)` e `mc.setVy(vy)` per cambiare la velocita, `mc.move(vx * deltaTime, vy * deltaTime)` per modificare la posizione.
 
 ---
 
