@@ -606,14 +606,42 @@ I passi principali sono i seguenti:
 
 ---
 
-### 3.7 Flusso Completo
+## 4. Rendering
 
-1. Game Loop chiama engine.update(dt) → AnimationSystem.update(dt):
-   - AnimationSystem scorre le entità con SpriteComponent.
-   - Per ogni componente, chiama updateAnimation(dt).
-   - Se elapsed >= frameTime, incrementa currentFrameIndex.
-2. Game Loop chiama engine.render(g2D) → RenderingSystem.render(g2D):
-   - RenderingSystem scorre le entità con SpriteComponent.
-   - Chiama spriteComp.getCurrentFrame() per ottenere la BufferedImage attuale.
-   - Disegna l’immagine alla posizione dell’entità.
+Il RenderingSystem è un sistema ECS dedicato alla fase di disegno (render) delle entità e degli elementi di gioco.
+- Ha una priorità elevata (10), così viene chiamato dopo gli altri sistemi.
+- Utilizza, se presente, una Camera per calcolare gli offset di disegno (panning dello scenario).
+- Ordina le entità prima di disegnarle, per assicurare un rendering corretto basato su livelli e posizioni.
+- Disegna sprite (SpriteComponent) e gestisce il debug di collisioni (ColliderComponent, TileMapComponent).
+- Supporta effetti di parallax (ParallaxComponent).
 
+Gli attributi principali sono:
+- `camera`: opzionale, se presente fornisce getxOffset() e getyOffset() per lo spostamento della vista.
+- `currentXOffset`, `currentYOffset`: memorizzano i valori di offset calcolati dalla camera per il frame corrente.
+- `entityComparator`: un Comparator che definisce l’ordine di disegno delle entità, basato su livello (layer) e, in subordine, sulla coordinata Y (per simulare una sorta di “ordine di profondità”).
+
+Il metodo initStateUpdateMap() definisce in quali stati del motore (EngineState) il sistema deve eseguire il proprio lavoro. Viene aggiornato (e quindi può disegnare) per esempio anche nello stato PAUSED, altrimenti il gioco non verrebbe disegnato se in pausa.
+
+Il metodo update(float deltaTime) svolge le seguenti funzioni:
+1.	Chiamare updateEntity per ogni entità, per eventuali aggiornamenti di debug (CollisionMapComponent, ColliderComponent).
+2.	Aggiornare la camera se non è nulla (camera.update(deltaTime)).
+
+Il rendering vero e proprio avviene nel metodo render(Graphics2D g). Le funzioni principali che svolge sono:
+1.	Calcola gli offset della camera (currentXOffset, currentYOffset).
+2.	Ordina le entità secondo entityComparator (engine.sortEntities).
+3.	Per ogni entità, chiama il metodo renderEntity(entity, g).
+
+Questo meccanismo permette di disegnare le entity in un ordine coerente (per es. entità con layer inferiore disegnate prima, se due entità hanno lo stesso layer si guarda la coordinata Y della parte inferiore delle bounding box).
+
+Il metodo renderEntity(Entity entity, Graphics2D g) disegna elementi specifici in base alle componenti dell’entità:
+- SpriteComponent + MotionComponent: viene richiamato `g.drawImage(sc.getCurrentSprite(), (int)(pc.getX() - currentXOffset), (int)(pc.getY() - currentYOffset), null);` per disegnare lo sprite alla posizione (x,y) “traslata” della camera.
+- Debug con ColliderComponent: Se engine.isDebug() è true, mostriamo il bounding box del collider colorandolo di rosso semitrasparente. Se colliderComponent.isColliding(), disegniamo anche un overlay giallo con alpha basato su un timer di collisione (timeRemaining).
+- AttackComponent: Se c’è un attacco in corso, disegniamo la sua hitBox in verde semitrasparente (questo aiuta a visualizzare la zona d’impatto).
+- TileMapComponent:  Disegniamo la mappa (tileMapImage) allineata alla camera: `g.drawImage(tileMapImage, -currentXOffset, -currentYOffset, null)`. In debug mode, individuiamo le tile “solid” e le coloriamo in rosso semitrasparente, oltre a mostrare le collisioni recenti con un overlay giallo.
+- ParallaxComponent:  Gestisce disegni di sfondi in parallasse (ad esempio livelli di sfondo che si muovono a velocità ridotta). Usando la velocità di parallass e currentXOffset, si calcola la posizione ripetuta dell’immagine di sfondo.
+- ChaseComponent + PathFinder (solo in debug): Se l’entità usa un pathfinder, disegniamo la lista dei nodi (un colore ciano semitrasparente) per mostrare il percorso calcolato.
+
+Il Comparator confronta prima di tutto i layer delle entità (entity.getLayer()). Se diversi, ordina in base a quello. Se uguali, cerca di ottenere MotionComponent e ColliderComponent per calcolare la posizione “finale” in base al bounding box. In sostanza:
+1.	e1.getLayer() != e2.getLayer() => confronta i layer.
+2.	Se i layer sono uguali, confronta le coordinate y delle parti inferiori delle bounding box per simulare un “sort by feet” (entità con i piedi più in basso disegnate sopra).
+3.	Altrimenti restituisce 0 (uguali).
