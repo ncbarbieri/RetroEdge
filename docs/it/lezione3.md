@@ -153,20 +153,20 @@ public class CharacterSpritesheet extends Spritesheet {
 ```
 
 Gli attributi fondamentali sono:
-- images: un array 3D che memorizza i frame per (Action, Direction, frameIndex).
-- boundingBox: bounding box “generica” (usata se non è definita una bounding box specifica per direzione).
-- directionalBoundingBoxes: mappa da una direzione a una bounding box dedicata, utile per definire collisioni differenziate.
+- ```images```: un array 3D che memorizza i frame per (Action, Direction, frameIndex).
+- ```boundingBox```: bounding box “generica” (usata se non è definita una bounding box specifica per direzione).
+- ```directionalBoundingBoxes```: mappa da una direzione a una bounding box dedicata, utile per definire collisioni differenziate.
 
 #### 1.4.1 Caricamento e Parsing (loadSpriteData)
 
 Nel costruttore CharacterSpritesheet(String configFile), viene chiamato loadSpriteData(configFile), che:
 1.	Apre il file .sprite come stream.
 2.	Legge riga per riga.
-3.	Se la riga inizia con fileName:, memorizza il path all’immagine (.png).
-4.	Se la riga inizia con frameWidth:, frameHeight:, li salva come variabili.
-5.	Se la riga inizia con boundingBox:, popola un Rectangle boundingBox.
-6.	Se la riga inizia con directionalBoundingBox:, popola la mappa directionalBoundingBoxes.
-7.	Se la riga inizia con action:, legge l’Action, la Direction e l’elenco dei frame.
+3.	Se la riga inizia con ```fileName:```, memorizza il path all’immagine (.png).
+4.	Se la riga inizia con ```frameWidth:```, frameHeight:, li salva come variabili.
+5.	Se la riga inizia con ```boundingBox:```, popola un Rectangle boundingBox.
+6.	Se la riga inizia con ```directionalBoundingBox:```, popola la mappa directionalBoundingBoxes.
+7.	Se la riga inizia con ```action:```, legge l’Action, la Direction e l’elenco dei frame.
 
 Esempio di riga action: ATTACK:RIGHT:0-0,0-1,0-2(f):
 - ATTACK = tipo di azione.
@@ -175,7 +175,7 @@ Esempio di riga action: ATTACK:RIGHT:0-0,0-1,0-2(f):
 
 #### 1.4.2 Inizializzazione finale
 
-Una volta parse-ate tutte le righe, viene chiamato:
+Una volta lette tutte le righe, viene chiamato:
 
 ```java
 initialize(spriteFile, frameWidth, frameHeight, 0, 0);
@@ -185,12 +185,12 @@ this.boundingBox = boundingBox;
 this.directionalBoundingBoxes = directionalBoundingBoxes;
 ```
 
-- initialize(...): metodo ereditato da Spritesheet per caricare effettivamente l’immagine con ImageIO.read(...).
-- initializeFrames(...): popola images[actionIndex][directionIndex][frameIndex] in base alle coordinate specificate, e gestisce il flip orizzontale se richiesto.
+- ```initialize(...)```: metodo ereditato da Spritesheet per caricare effettivamente l’immagine con ImageIO.read(...).
+- ```initializeFrames(...)```: popola images[actionIndex][directionIndex][frameIndex] in base alle coordinate specificate, e gestisce il flip orizzontale se richiesto.
 
 #### 1.4.3 Struttura dei Frame: images[action][direction][frame]
 
-Nel metodo initializeFrames(...), abbiamo:
+Nel metodo ```initializeFrames(...)```, abbiamo il seguente codice:
 
 ```java
 this.images = new BufferedImage[Action.values().length][Direction.values().length][];
@@ -217,15 +217,14 @@ for (Map.Entry<Action, Map<Direction, List<Point>>> actionEntry : frameData.entr
 }
 ```
 
-- Qui stiamo iterando su tutti gli Action e tutte le Direction.
+- Iteriamo su tutti gli Action e tutte le Direction.
 - frames è la lista di coordinate (riga, colonna) ricavate dal file .sprite.
 - flippedFrames è una lista parallela di boolean, per sapere se quel frame va girato orizzontalmente.
-- Le immagini finali vengono memorizzate in images per un rapido accesso a runtime.
+- Le immagini finali vengono memorizzate nell'array images[action][direction][frame] per un rapido accesso a runtime.
 
-#### 1.4.4 Bounding Box (Generica e Direzionale)
+#### 1.4.4 Bounding Box Generica
 
-#### 1.4.4.1 Bounding Box Generica
-
+```java
 public Rectangle getBoundingBox() {
     if (boundingBox == null) {
         // fallback di default
@@ -233,21 +232,24 @@ public Rectangle getBoundingBox() {
     }
     return boundingBox;
 }
+```
 
 Se nel file .sprite non è definito boundingBox:, la bounding box di default coincide con un rettangolo ampio come un frame.
 
-4.2 Bounding Box Direzionale
+#### 1.4.4 Bounding Box Direzionale
 
+```java
 public Map<Direction, Rectangle> getDirectionalBoundingBoxes() {
     if (directionalBoundingBoxes == null) {
         return new HashMap<>();
     }
     return directionalBoundingBoxes;
 }
+```
 
 Se abbiamo linee del tipo:
 
-directionalBoundingBox:LEFT:10-10-40-50
+```directionalBoundingBox:LEFT:10-10-40-50```
 
 il sistema popola una Map<Direction, Rectangle> che, per la direzione LEFT, restituirà un box (10,10,40,50).
 Questo permette di avere un box “asimmetrico” per l’animazione a sinistra vs. a destra.
