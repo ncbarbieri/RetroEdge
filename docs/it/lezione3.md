@@ -236,7 +236,7 @@ public Rectangle getBoundingBox() {
 
 Se nel file .sprite non è definito ```boundingBox:```, la bounding box di default coincide con un rettangolo ampio come un frame.
 
-#### 1.4.4 Bounding Box Direzionale
+#### 1.4.5 Bounding Box Direzionale
 
 ```java
 public Map<Direction, Rectangle> getDirectionalBoundingBoxes() {
@@ -254,7 +254,7 @@ Se abbiamo linee del tipo:
 il sistema popola una ```Map<Direction, Rectangle>``` che, per la direzione LEFT, restituirà un box (10,10,40,50).
 Questo permette di avere una bounding box diversa a seconda della direzione.
 
-#### 1.4.5 Integrazione con SpriteComponent e AnimationSystem
+#### 1.4.6 Integrazione con SpriteComponent e AnimationSystem
 
 All’atto pratico:
 1. Creiamo un CharacterSpritesheet da un file .sprite (es: /spritesheet/player.sprite).
@@ -265,7 +265,7 @@ All’atto pratico:
 ### 1.5 Classe SpriteComponent.java
 
 Questo componente rappresenta il “legame” tra un’entità e il suo sprite sheet (o animazioni). Le sue funzioni sono:
-- Collega l’entità a uno **spritesheet** (con tutti i frame e le informazioni di animazione).
+- Prende come parametro lo **spritesheet** per prelevare tutti i frame e le informazioni di animazione.
 - Tiene traccia dello **stato corrente** (quale azione e direzione è selezionata in un determinato istante), e quindi del **frame corrente** da disegnare.
 - Definisce la **velocità** di animazione, il **timer** e altri parametri.
 
@@ -274,21 +274,32 @@ Esempio semplificato:
 ```java
 public class SpriteComponent extends Component {
     private BufferedImage[][][] images; 
-    private float animationSpeed;  // Esempio: 0.08f
-    private boolean loop;
-    private String currentAction = "IDLE";
-    private String currentDirection = "DOWN";
-    private List<FrameIndex> currentFrames;
-    private int currentFrameIndex;
+    private int currentFrame;
+    private float frameDuration;
     private float elapsedTime;
+    private int frameWidth;
+    private int frameHeight;
+    private Direction direction;
+    private Action action;
+//  Flag indicating whether the animation should loop or play once
+    protected boolean looping;         
+    private Runnable onAnimationEnd;
 
-    public SpriteComponent(Entity e, Spritesheet sheet, float animSpeed, boolean loop) {
-        super(e);
-        this.spritesheet = sheet;
-        this.animationSpeed = animSpeed;
-        this.loop = loop;
-        // Carichiamo i frame dell'azione/direzione iniziale
-        this.currentFrames = spritesheet.getFramesFor(currentAction, currentDirection);
+    public SpriteComponent(Entity entity, CharacterSpritesheet spritesheet, float frameDuration, boolean looping) {
+    	super(entity);
+    	if (spritesheet == null) {
+            throw new IllegalArgumentException("Spritesheet cannot be null.");
+        }
+        this.frameDuration = frameDuration;
+        this.looping = looping;
+        this.onAnimationEnd = null;
+        this.currentFrame = 0;
+        this.elapsedTime = 0.0f;
+        this.direction = Direction.RIGHT; // Default direction
+        this.action = Action.IDLE; // Default action
+        this.images = spritesheet.getImages();
+        this.frameWidth = spritesheet.getFrameWidth();
+        this.frameHeight = spritesheet.getFrameHeight();
     }
 
     // Metodi per cambiare azione/direzione, resettare l’animazione, ecc.
@@ -297,6 +308,21 @@ public class SpriteComponent extends Component {
 ```
 
 Questo SpriteComponent verrà aggiornato dall’AnimationSystem per cambiare il frame corrente in base al tempo trascorso, e letto dal RenderingSystem per disegnare il frame corretto.
+Le funzionalità principali sono:
+
+1. Prendere il CharacterSpritesheet come parametro del costruttore:
+   - Questo ci fornisce l’array images[action][direction][frame] e le bounding box, se necessario.
+2. Gestire l’azione e la direzione correnti:
+   - currentAction (es: IDLE, WALK, ATTACK).
+   - currentDirection (es: UP, DOWN, LEFT, RIGHT).
+3. Tempi di animazione e frame:
+   - frameTime definisce quanto durano i frame (es: se frameTime = 0.08f, ogni 0.08 secondi passiamo al frame successivo).
+   - elapsed accumula il tempo trascorso dall’ultimo cambio di frame.
+   - currentFrameIndex indica quale frame stiamo usando.
+4. Looping:
+   - Se true, quando arriviamo all’ultimo frame, torniamo a 0.
+   - Se false, restiamo sull’ultimo frame (animazione “one-shot”).
+
 
 ### 1.5 Classe AnimationSystem.java
 
