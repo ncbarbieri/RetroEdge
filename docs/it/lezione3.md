@@ -234,7 +234,7 @@ public Rectangle getBoundingBox() {
 }
 ```
 
-Se nel file .sprite non è definito boundingBox:, la bounding box di default coincide con un rettangolo ampio come un frame.
+Se nel file .sprite non è definito ```boundingBox:```, la bounding box di default coincide con un rettangolo ampio come un frame.
 
 #### 1.4.4 Bounding Box Direzionale
 
@@ -251,29 +251,29 @@ Se abbiamo linee del tipo:
 
 ```directionalBoundingBox:LEFT:10-10-40-50```
 
-il sistema popola una Map<Direction, Rectangle> che, per la direzione LEFT, restituirà un box (10,10,40,50).
-Questo permette di avere un box “asimmetrico” per l’animazione a sinistra vs. a destra.
+il sistema popola una ```Map<Direction, Rectangle>``` che, per la direzione LEFT, restituirà un box (10,10,40,50).
+Questo permette di avere una bounding box diversa a seconda della direzione.
 
-5. Integrazione con SpriteComponent e AnimationSystem
+#### 1.4.5 Integrazione con SpriteComponent e AnimationSystem
 
 All’atto pratico:
-	1.	Creiamo un CharacterSpritesheet da un file .sprite (es: /player/Link.sprite).
-	2.	In SpriteComponent, teniamo un riferimento a CharacterSpritesheet. Quando l’AnimationSystem decide quale frame disegnare (ad esempio, ATTACK, RIGHT, frameIndex=3), possiamo accedere a images[Action.ATTACK.getActionIndex()][Direction.RIGHT.getDirectionIndex()][3].
-	3.	Bounding Box: a seconda della direzione corrente, possiamo usare getDirectionalBoundingBoxes().get(direction) o, se non esiste, usare la bounding box generica con getBoundingBox().
-	4.	Draw: un eventuale RenderingSystem userà g.drawImage(...) sul frame. Se ci serve la bounding box per collisioni o debug, la useremo nelle verifiche di sovrapposizione.
+1. Creiamo un CharacterSpritesheet da un file .sprite (es: /spritesheet/player.sprite).
+2. In SpriteComponent, teniamo un riferimento a CharacterSpritesheet. Quando l’AnimationSystem decide quale frame disegnare (ad esempio, ATTACK, RIGHT, frameIndex=3), possiamo accedere a ```images[Action.ATTACK.getActionIndex()][Direction.RIGHT.getDirectionIndex()][3]```.
+3. Bounding Box: a seconda della direzione corrente, possiamo usare getDirectionalBoundingBoxes().get(direction) o, se non esiste, usare la bounding box generica con getBoundingBox().
+4. Draw: un eventuale RenderingSystem userà g.drawImage(...) sul frame. Se ci serve la bounding box per collisioni o debug, la useremo nelle verifiche di sovrapposizione.
 
-### 1.4 Classe SpriteComponent.java
+### 1.5 Classe SpriteComponent.java
 
-Questo componente rappresenta il “legame” tra un’entità e il suo sprite sheet (o animazioni). Di solito fornisce:
-1.	Riferimento a un Spritesheet o CharacterSpritesheet.
-2.	Timer e velocità di animazione (se l’animazione è gestita dal componente stesso o delegata all’AnimationSystem).
-3.	Stato corrente (quale azione e direzione è selezionata in un determinato istante).
-4.	Frame corrente da disegnare.
+Questo componente rappresenta il “legame” tra un’entità e il suo sprite sheet (o animazioni). Le sue funzioni sono:
+- Collega l’entità a uno **spritesheet** (con tutti i frame e le informazioni di animazione).
+- Tiene traccia dello **stato corrente** (quale azione e direzione è selezionata in un determinato istante), e quindi del **frame corrente** da disegnare.
+- Definisce la **velocità** di animazione, il **timer** e altri parametri.
 
 Esempio semplificato:
 
+```java
 public class SpriteComponent extends Component {
-    private Spritesheet spritesheet;
+    private BufferedImage[][][] images; 
     private float animationSpeed;  // Esempio: 0.08f
     private boolean loop;
     private String currentAction = "IDLE";
@@ -294,10 +294,11 @@ public class SpriteComponent extends Component {
     // Metodi per cambiare azione/direzione, resettare l’animazione, ecc.
     // ...
 }
+```
 
 Questo SpriteComponent verrà aggiornato dall’AnimationSystem per cambiare il frame corrente in base al tempo trascorso, e letto dal RenderingSystem per disegnare il frame corretto.
 
-4. Classe AnimationSystem.java
+### 1.5 Classe AnimationSystem.java
 
 Si occupa di far “scorrere” i frame nel SpriteComponent. Lo pseudocodice potrebbe essere:
 
@@ -319,6 +320,203 @@ public class AnimationSystem extends BaseSystem {
 }
 
 Alcuni progetti usano un componente dedicato all’animazione (tipo AnimationComponent) e lasciano a SpriteComponent solo la parte di disegno. Altri (come questo) possono unire i concetti in un unico componente. L’importante è che il sistema abbia tutte le info necessarie per aggiornare i frame in base al tempo.
+# Approfondimento: `SpriteComponent` e `AnimationSystem`
+
+In questa sezione entriamo nel dettaglio di **come** le entità utilizzano i dati provenienti dal `CharacterSpritesheet` (o `Spritesheet`) per animare i personaggi.
+
+---
+
+## 1. Introduzione
+
+Per gestire l’**animazione** di un’entità, servono due elementi chiave:
+
+1. **`SpriteComponent`** – Un componente che:
+   - Collega l’entità a uno **spritesheet** (con tutti i frame e le informazioni di animazione).
+   - Tiene traccia dello **stato corrente** (azione, direzione, frame index…).
+   - Eventualmente definisce la **velocità** di animazione, il **timer**, e altri parametri.
+
+2. **`AnimationSystem`** – Un sistema che:
+   - Scansiona le entità dotate di `SpriteComponent`.
+   - Aggiorna il frame corrente in base al tempo trascorso (`deltaTime`).
+   - Gestisce i passaggi di stato (es. da “IDLE” a “WALK”) se la logica lo prevede (o se un altro componente imposta un nuovo stato).
+
+In molti progetti ECS, si può dividere ulteriormente la logica in un componente **`AnimationComponent`** e un componente **`SpriteComponent`** più basilare. Nel codice che stiamo analizzando, i compiti di animazione e sprite sono uniti: è il `SpriteComponent` a sapere **quale** frame disegnare, mentre l’`AnimationSystem` coordina il **quando** passare al frame successivo.
+
+---
+
+## 2. Dettaglio di `SpriteComponent.java`
+
+### 2.1 Struttura di base
+
+Un possibile scheletro (semplificato) potrebbe essere:
+
+```java
+public class SpriteComponent extends Component {
+    private final CharacterSpritesheet spritesheet;
+
+    // Indica quale azione e direzione stiamo animando
+    private Action currentAction;
+    private Direction currentDirection;
+
+    // Parametri di animazione
+    private float frameTime;       // Tempo tra un frame e l’altro
+    private float elapsed;         // Tempo accumulato nel frame attuale
+    private int currentFrameIndex; // Indice del frame
+    private boolean loop;          // Se l’animazione ricomincia dopo l’ultimo frame
+
+    // Costruttore
+    public SpriteComponent(Entity entity, CharacterSpritesheet sheet, float frameTime, boolean loop) {
+        super(entity);
+        this.spritesheet = sheet;
+        this.frameTime = frameTime;
+        this.loop = loop;
+        this.currentAction = Action.IDLE;       // Azione iniziale (es. IDLE)
+        this.currentDirection = Direction.DOWN; // Direzione iniziale
+    }
+
+    // Getter e setter
+    public Action getCurrentAction() { return currentAction; }
+    public void setCurrentAction(Action action) { 
+        this.currentAction = action; 
+        resetAnimation();
+    }
+
+    public Direction getCurrentDirection() { return currentDirection; }
+    public void setCurrentDirection(Direction direction) {
+        this.currentDirection = direction; 
+        resetAnimation();
+    }
+
+    public BufferedImage getCurrentFrame() {
+        // Accediamo allo sprite corrispondente dal CharacterSpritesheet
+        return spritesheet.getImages()[currentAction.getActionIndex()]
+                          [currentDirection.getDirectionIndex()]
+                          [currentFrameIndex];
+    }
+
+    // Metodo chiamato da AnimationSystem per avanzare di frame
+    public void updateAnimation(float dt) {
+        elapsed += dt;
+        if (elapsed >= frameTime) {
+            elapsed = 0;
+            currentFrameIndex++;
+            // Se superiamo l’ultimo frame
+            if (currentFrameIndex >= getFrameCount()) {
+                if (loop) {
+                    currentFrameIndex = 0;
+                } else {
+                    currentFrameIndex = getFrameCount() - 1; // Resta sull’ultimo frame
+                }
+            }
+        }
+    }
+
+    private void resetAnimation() {
+        // Quando cambiamo azione o direzione, ricominciamo dal frame 0
+        this.currentFrameIndex = 0;
+        this.elapsed = 0;
+    }
+
+    private int getFrameCount() {
+        // Numero totale di frame per l'azione/direzione corrente
+        return spritesheet.getImages()[currentAction.getActionIndex()]
+                          [currentDirection.getDirectionIndex()].length;
+    }
+}
+
+2.2 Funzionalità Principali
+
+	1.	Associarsi a uno CharacterSpritesheet:
+	•	Questo ci fornisce l’array images[action][direction][frame] e le bounding box, se necessario.
+	2.	Gestire l’azione e la direzione correnti:
+	•	currentAction (es: IDLE, WALK, ATTACK).
+	•	currentDirection (es: UP, DOWN, LEFT, RIGHT).
+	3.	Tempi di animazione e frame:
+	•	frameTime definisce quanto durano i frame (es: se frameTime = 0.08f, ogni 0.08 secondi passiamo al frame successivo).
+	•	elapsed accumula il tempo trascorso dall’ultimo cambio di frame.
+	•	currentFrameIndex indica quale frame stiamo usando.
+	4.	Looping:
+	•	Se true, quando arriviamo all’ultimo frame, torniamo a 0.
+	•	Se false, restiamo sull’ultimo frame (animazione “one-shot”).
+
+3. Dettaglio di AnimationSystem.java
+
+3.1 Scopo del Sistema
+
+AnimationSystem controlla tutti gli SpriteComponent (o AnimationComponent) e gestisce l’aggiornamento del frame in base al deltaTime. Poiché è un sistema di “logica”, tipicamente esegue il suo lavoro in update(...).
+
+Esempio semplificato:
+
+public class AnimationSystem extends BaseSystem {
+
+    @Override
+    public void update(Engine engine, double dt) {
+        List<Entity> entities = engine.getEntities(); 
+        for (Entity e : entities) {
+            SpriteComponent sc = e.getComponent(SpriteComponent.class);
+            if (sc != null) {
+                // Aggiorniamo l'animazione (passiamo double dt come float)
+                sc.updateAnimation((float)dt);
+                
+                // Potremmo cambiare azione/direzione in base a una logica aggiuntiva
+                // es: se velocity.x > 0 => sc.setCurrentDirection(Direction.RIGHT);
+                // sc.setCurrentAction(Action.WALK);
+            }
+        }
+    }
+
+    @Override
+    public void render(Engine engine, Graphics2D g) {
+        // Non facciamo nulla qui, l'animazione è "logica"
+        // Il disegno avviene tipicamente nel RenderingSystem
+    }
+}
+
+3.2 Approccio Logico vs. Rendering
+
+	•	Molti engine lasciano che l’AnimationSystem faccia solo la parte di “avanzamento del frame index” durante update(...).
+	•	Il RenderingSystem leggerà poi SpriteComponent.getCurrentFrame() e lo disegnerà.
+	•	Se nel tuo progetto preferisci un “metodo unico” (cioè AnimationSystem fa update e disegno), potresti farlo, ma generalmente in ECS si tende a separare la logica (update) dal rendering (render).
+
+4. Flusso di Lavoro Completo
+
+	1.	Game Loop chiama engine.update(dt) → AnimationSystem.update(dt):
+	•	AnimationSystem scorre le entità con SpriteComponent.
+	•	Per ogni componente, chiama updateAnimation(dt).
+	•	Se elapsed >= frameTime, incrementa currentFrameIndex.
+	2.	Game Loop chiama engine.render(g2D) → RenderingSystem.render(g2D):
+	•	RenderingSystem scorre le entità con SpriteComponent.
+	•	Chiama spriteComp.getCurrentFrame() per ottenere la BufferedImage attuale.
+	•	Disegna l’immagine alla posizione dell’entità.
+
+5. Interazione con Altri Sistemi
+
+5.1 Cambio d’azione / direzione in MotionSystem o InputSystem
+
+Spesso, i componenti di animazione si coordinano con i sistemi di movimento:
+	•	InputSystem: se premi la freccia verso sinistra, imposta SpriteComponent.setCurrentDirection(Direction.LEFT) e SpriteComponent.setCurrentAction(Action.WALK).
+	•	MotionSystem: se la velocità è zero, imposta Action.IDLE; se è diversa da zero, imposta Action.WALK.
+
+In alcuni design, preferisci tenere un StateComponent che definisce lo stato del personaggio (IDLE, WALK, ATTACK, ecc.), e l’AnimationSystem si limita a leggere quel componente e impostare i frame di conseguenza. L’idea di base è che l’animazione sia sempre sincronizzata con la logica di movimento/azione.
+
+5.2 Bounding Box e Collisioni
+
+Se il tuo SpriteComponent (o CharacterSpritesheet) fornisce una bounding box, potresti avere:
+	•	CollisionSystem: legge la bounding box dell’entità in base a SpriteComponent (o un ColliderComponent) e verifica collisioni con l’ambiente.
+	•	CharacterSpritesheet a volte fornisce bounding box specifiche per direzione (e magari offset), così l’entità appare “più stretta” se vista di lato, ecc.
+
+6. Conclusioni
+
+	•	SpriteComponent:
+	1.	Tiene i dati dell’animazione (azione, direzione, frame corrente).
+	2.	Regola la velocità di cambio frame (frameTime) e la modalità loop.
+	3.	Espone un metodo (updateAnimation) per far avanzare i frame.
+	•	AnimationSystem:
+	1.	Esegue l’update di tutti i SpriteComponent basato sul tempo (deltaTime).
+	2.	Non disegna nulla (per separare logica e rendering).
+	3.	Può coordinarsi con altri sistemi per cambiare azione/direzione.
+
+Insieme, questi due elementi gestiscono la parte logica dell’animazione, mentre il RenderingSystem (o chi per esso) si occupa di disegnare a schermo il frame scelto. Questo consente un disaccoppiamento pulito: se in futuro cambiamo il modo in cui calcoliamo i frame (aggiungendo, ad esempio, rallentamenti, slow motion, o effetti di stato), non dovremo toccare la parte di rendering.
 
 5. Dichiarazione del Player nello Stato (Metodo init)
 
