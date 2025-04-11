@@ -73,7 +73,7 @@ package "ECS" {
 Engine *-- EngineStateManager
 Engine o-- Entity
 Engine o-- BaseSystem
-Entity --> Component
+Entity o-- Component
 EngineStateManager --> EngineState
 
 @enduml
