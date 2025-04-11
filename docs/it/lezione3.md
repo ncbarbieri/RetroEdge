@@ -413,7 +413,7 @@ Esempio di riga action: ATTACK:RIGHT:0-0,0-1,0-2(f):
 - RIGHT = direzione.
 - Frame: (riga=0, col=0), (riga=0, col=1), (riga=0, col=2, flipped). Il (f) indica che quel frame deve essere “ribaltato” orizzontalmente.
 
-#### 2.4.2 Inizializzazione finale
+#### 3.4.2 Inizializzazione finale
 
 Una volta lette tutte le righe, viene chiamato:
 
@@ -645,3 +645,118 @@ Il Comparator confronta prima di tutto i layer delle entità (entity.getLayer())
 1.	e1.getLayer() != e2.getLayer() => confronta i layer.
 2.	Se i layer sono uguali, confronta le coordinate y delle parti inferiori delle bounding box per simulare un “sort by feet” (entità con i piedi più in basso disegnate sopra).
 3.	Altrimenti restituisce 0 (uguali).
+
+---
+
+## 5. Configurazione del metodo init dello stato di gioco
+
+Per muovere il giocatore sullo schermo di gioco, occorre aggiungere le entity nel metodo `init()` della classe PlayState. Iniziamo creando l’entità “player”:
+
+```java
+// Entities:
+// Player
+Entity player = new Entity(EntityType.PLAYER, 2);
+```
+
+Il costruttore riceve un EntityType (PLAYER) e un numero di layer (2), per ordinare il rendering rispetto ad altre entità. Proseguiamo caricando lo sprite del player e istanziando un MotionComponent:
+
+```java
+CharacterSpritesheet playerSpritesheet = new CharacterSpritesheet("/sprites/player.sprite");
+MotionComponent playerPosition = new MotionComponent(player, 100, 100, 300.0f);
+```
+
+- "/sprites/player.sprite" è il file di configurazione dello sprite.
+- MotionComponent imposta la posizione iniziale (100,100) e una velocità massima di 300.0f.
+
+Aggiungiamo successivamente i componenti per la gestione dell'input e degli sprite:
+
+```java
+player.addComponent(playerPosition);
+KeyInputComponent playerInput = new KeyInputComponent(player);
+player.addComponent(playerInput);
+SpriteComponent playerSprites = new SpriteComponent(player, playerSpritesheet, .08f, true);
+player.addComponent(playerSprites);
+```
+
+- KeyInputComponent abilita l’entità a reagire ai comandi da tastiera (tramite ActionStateManager).
+- SpriteComponent lega l’entità allo spritesheet e definisce la velocità di animazione (.08f) e se l'animazione si ripete (true).
+
+Infine, registriamo l’entità nel nostro stato o motore:
+
+```java
+add(player);
+```
+
+Aggiungiamo adesso i sistemi, cominciando dalla gestione della mappatura tasti → azioni, creando un InputSystem:
+
+```java
+// Systems:
+InputSystem inputSystem = new InputSystem(this.engine);
+```
+
+Poi eseguiamo il binding delle azioni di base del movimento WASD ai relativi tasti:
+
+```java
+inputSystem.bindAction(InputAction.MOVE_LEFT, KeyEvent.VK_A);
+inputSystem.bindAction(InputAction.MOVE_RIGHT, KeyEvent.VK_D);
+inputSystem.bindAction(InputAction.MOVE_UP, KeyEvent.VK_W);
+inputSystem.bindAction(InputAction.MOVE_DOWN, KeyEvent.VK_S);
+```
+
+Ora configuriamo due azioni personalizzate, “PAUSE” e “DEBUG”, associando il tasto e il callback da eseguire:
+
+```java
+inputSystem.bindCustomAction(InputAction.PAUSE, KeyEvent.VK_P, deltaTime -> {
+    EngineState currentState = engine.getStateManager().getCurrentState();
+    if (currentState == EngineState.RUNNING) {
+        engine.getStateManager().requestStateChange(EngineState.PAUSED);
+    } else if (currentState == EngineState.PAUSED) {
+        engine.getStateManager().requestStateChange(EngineState.RUNNING);
+    }
+});
+inputSystem.addDebouncedAction(InputAction.PAUSE);
+
+inputSystem.bindCustomAction(InputAction.DEBUG, KeyEvent.VK_0, deltaTime -> {
+    if (engine.isDebug()) {
+        engine.setDebug(false);
+    } else {
+        GamePanel.resetDebug();
+        engine.setDebug(true);
+    }
+});
+inputSystem.addDebouncedAction(InputAction.DEBUG);
+```
+
+- “debounced” significa che l’azione si attiva una sola volta quando il tasto viene premuto.
+- Se “PAUSE” è attiva, in base allo stato corrente (RUNNING o PAUSED) si richiede il passaggio allo stato opposto.
+- “DEBUG” alterna la modalità di debug.
+
+Aggiungiamo poi l’InputSystem alla scena:
+
+```java
+add(inputSystem);
+```
+
+Dopo l’InputSystem, registriamo gli altri sistemi fondamentali:
+
+```java
+add(new MotionSystem(this.engine));
+add(new AnimationSystem(this.engine));
+add(new RenderingSystem(this.engine));
+```
+
+- MotionSystem: aggiorna la posizione delle entità (player, NPC, ecc.) in base alla velocità e ai comandi di input.
+- AnimationSystem: gestisce l’avanzamento dei frame nel SpriteComponent (idle, walk, ecc.).
+- RenderingSystem: disegna le entità sullo schermo, usando un eventuale offset di camera.
+
+---
+
+## 6. Riepilogo generale
+
+1.	Game Loop: il pannello di gioco (GamePanel) richiama periodicamente engine.update(deltaTime) e engine.render(g).
+2.	InputSystem (priorità 1): legge i tasti premuti (KeyboardInputHandler) e aggiorna ActionStateManager. Gestisce anche le azioni personalizzate (PAUSE, DEBUG).
+3.	MotionSystem (priorità 2): controlla se i tasti di movimento sono attivi, regola velocità e posizione dell’entità player aggiornando il MotionComponent. Se un entità è un NPC, ne gestisce il path. Se sta attaccando, blocca il movimento.
+4.	AnimationSystem (priorità 9): scorre i componenti per la gestione degli sprite, avanzando i frame dell’animazione in base al tempo trascorso. Se un’azione cambia (es. da IDLE a WALK), resetta i frame.
+5.	RenderingSystem (priorità 10): calcola l’offset della camera se presente, ordina le entità (layer, Y), e disegna su Graphics2D. Include eventuali debug overlay per collisioni, tile solid, parallax, pathfinding, ecc.
+
+Questa catena consente un flusso coerente: prima input, poi movimento, poi animazione, e infine disegno. L’entità “player”, configurata con KeyInputComponent, MotionComponent e SpriteComponent, si sposterà correttamente in base ai tasti WASD, cambierà animazione (walk/idle) e verrà visualizzata sulla scena.
