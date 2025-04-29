@@ -427,9 +427,9 @@ this.directionalBoundingBoxes = directionalBoundingBoxes;
 ```
 
 - ```initialize(...)```: metodo ereditato da Spritesheet per caricare effettivamente l’immagine con ImageIO.read(...).
-- ```initializeFrames(...)```: popola images[actionIndex][directionIndex][frameIndex] in base alle coordinate specificate, e gestisce il flip orizzontale se richiesto.
+- ```initializeFrames(...)```: popola ``images[actionIndex][directionIndex][frameIndex]` in base alle coordinate specificate, e gestisce il flip orizzontale se richiesto.
 
-#### 3.4.3 Struttura dei Frame: images[action][direction][frame]
+#### 3.4.3 Struttura dei Frame: `images[action][direction][frame]`
 
 Nel metodo ```initializeFrames(...)```, abbiamo il seguente codice:
 
@@ -461,7 +461,7 @@ for (Map.Entry<Action, Map<Direction, List<Point>>> actionEntry : frameData.entr
 - Iteriamo su tutti gli Action e tutte le Direction.
 - frames è la lista di coordinate (riga, colonna) ricavate dal file .sprite.
 - flippedFrames è una lista parallela di boolean, per sapere se quel frame va girato orizzontalmente.
-- Le immagini finali vengono memorizzate nell'array images[action][direction][frame] per un rapido accesso a runtime.
+- Le immagini finali vengono memorizzate nell'array `images[action][direction][frame]` per un rapido accesso a runtime.
 
 #### 3.4.4 Bounding Box Generica
 
