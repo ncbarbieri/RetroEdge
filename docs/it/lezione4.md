@@ -91,11 +91,11 @@ il movimento è limitato da maxOffsetX/Y per non mostrare bordi vuoti.
 
 ## 7 FLUSSO COMPLETO NEL GAME LOOP
 
-1.	InputSystem legge la tastiera → aggiorna ActionStateManager.
-2.	MotionSystem usa i flag di input e la gravità per aggiornare velocità / posizione.
-3.	AnimationSystem decide action / direction dal MotionComponent → avanza i frame sprite.
-4.	Camera (FollowPlayer) aggiorna gli offset in base al player.
-5.	TileManagers avanzano eventuali tile animate.
-6.	RenderingSystem disegna nell’ordine:
+InputSystem legge la tastiera → aggiorna ActionStateManager.
+MotionSystem usa i flag di input e la gravità per aggiornare velocità / posizione.
+AnimationSystem decide action / direction dal MotionComponent → avanza i frame sprite.
+Camera (FollowPlayer) aggiorna gli offset in base al player.
+TileManagers avanzano eventuali tile animate.
+RenderingSystem disegna nell’ordine:
 
 Risultato: il personaggio scorre in una mappa grande, la telecamera lo segue, le tile animate si muovono e le collisioni solide sono visualizzate in rosso (tasto 0 in debug).
