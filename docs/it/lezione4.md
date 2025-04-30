@@ -28,31 +28,160 @@ Per posizionare la macchina da presa in una scrolling tilemap, si rende necessar
 
 Per visualizzare gli oggetti sullo schermo, è sufficiente una scansione parziale della matrice: solo le Tiles visibili vengono disegnate, sottraendo le coordinate della macchina da presa. Disegnare le Tile nascoste sarebbe inutile e peggiorerebbe le prestazioni.
 
-La griglia di visualizzazione è composta di solito da più livelli, allo scopo di creare un mondo graficamente più ricco e usare un numero inferiore di Tiles. I livelli vengono disegnati dal basso verso l’alto, poiché nella prospettiva top-down un oggetto copre tutto ciò che sta al di sotto. Se una roccia appare sopra a diversi tipi di terreno (come erba, sabbia o mattoni) può essere disegnata direttamente sopra alla Tile corrispondente al terreno, invece di doverne prevedere una diversa per ogni tipo di terreno. Se non si rispetta l’ordine dei livelli, però, si rischia di vedere il personaggio principale del gioco camminare sotto un albero o sotto un edificio. La seguente immagine mostra un esempio di entrambe le situazioni: un cavaliere sotto a un albero e un cespuglio su diversi tipi di terreno.
+La griglia di visualizzazione è composta di solito da più livelli, allo scopo di creare un mondo graficamente più ricco e usare un numero inferiore di Tiles. I livelli vengono disegnati dal basso verso l’alto, poiché nella prospettiva top-down un oggetto copre tutto ciò che sta al di sotto. Se una roccia appare sopra a diversi tipi di terreno (come erba, sabbia o mattoni) può essere disegnata direttamente sopra alla Tile corrispondente al terreno, invece di doverne prevedere una diversa per ogni tipo di terreno. Se non si rispetta l’ordine dei livelli, però, si rischia di vedere il personaggio principale del gioco camminare sotto un albero o sotto un edificio. 
 Alla griglia visiva viene fatta corrispondere una griglia logica, usata per gestire le collisioni, per attribuire punti, per innescare determinate azioni se certi oggetti sono posizionati nel modo giusto, per algoritmi di ricerca del cammino minimo, ecc
 
+## 1. Tileset
+La classe `Tileset` rappresenta una raccolta di immagini (tile) caricate da un'unica immagine sorgente. Fornisce funzionalità per:
 
-La classe Tile, invece, rappresenta un singolo elemento (tile) di una mappa di gioco.
+- Estrazione delle singole tile
+- Gestione delle **tile solide**
+- Gestione delle **tile animate**
+- Creazione di oggetti `Tile` per creare la mappa
 
+Quando viene istanziata una classe `Tileset`, viene caricata un’immagine completa (sprite sheet `.png`) che contiene tutte le tile disposte in una **griglia di righe e colonne**.  A volte le tile non sono disposte una accanto all’altra senza interruzioni. Vengono introdotti due parametri importanti: il margine e la spaziatura.
 
-## 1 Il Tileset
-La classe Tileset rappresenta un'astrazione fondamentale per facilitare l'organizzazione e il recupero di tiles individuali da un unico asset grafico, comunemente noto come tileset o texture atlas, che combina multiple immagini (tiles) in un'unica immagine più grande.
-Alla chiamata del costruttore, la classe carica l'immagine del tileset da una risorsa esterna specificata dal parametro fileName. 
-Successivamente, analizza l'immagine per determinare il numero di righe e colonne di tiles, basandosi sulle dimensioni fornite dei tiles (tileWidth e tileHeight), nonché su eventuali margini e spaziature (margin e spacing) tra i tiles. 
-Tramite l'uso del metodo getSubimage della classe BufferedImage, le immagini dei singoli tiles vengono estratte e memorizzate in una matrice bidimensionale tileImages, secondo la loro disposizione nel tileset originale. 
-Questo processo consente l'accesso diretto a ogni immagine del tile tramite coordinate di riga e colonna o un indice unico. 
-La classe fornisce metodi per ottenere l'immagine di un tile specifico, sia tramite coordinate di riga e colonna (getTileImage(int row, int col)) che tramite un indice unico (getTileImage(int index)), quest'ultimo calcolando la posizione corrispondente nella matrice bidimensionale basandosi sull'ordinamento dei tiles.
+Il **margine** è lo spazio (in pixel) che si trova **tra il bordo esterno dell'immagine** e la prima tile.  
+In pratica, è uno "cuscinetto" che circonda tutte le tile e che va **ignorato** durante il ritaglio.
 
-Tileset incapsula un’immagine («tilesheet») e la divide in sotto-immagini di dimensione costante.
-Costruttore Tileset(String fileName, int tileW, int tileH, int margin, int spacing)
-Carica l’immagine con ImageIO.read.
-Calcola righe / colonne in base a dimensioni, margine, spaziatura.
-Ritaglia ogni tile con getSubimage e lo salva in `tileImages[row][col]`.
-Metodi di utilità
-getTileImage(int index) (sequenziale)
-getTileImage(int row,int col) (coordinato)
+La **spaziatura** è la distanza (in pixel) **tra una tile e l'altra** all'interno del tileset.  
+Serve per evitare artefatti grafici (bleeding) durante il rendering, specialmente se l’immagine viene scalata o filtrata.
 
-## 3 La Tile
+In un tileset con 3 tile in una riga, dove ogni tile è larga 32 pixel, con:
+
+- `margin = 4`
+- `spacing = 2`
+
+L'immagine avrà la seguante struttura (in pixel):
+
+|––4px––|–32–|–2–|–32–|–2–|–32–|––4px––|
+
+Totale larghezza = `4 + 32 + 2 + 32 + 2 + 32 + 4 = 106 px`
+
+Nel costruttore della classe `Tileset`, questi parametri vengono usati per calcolare dove ritagliare le tile:
+In questo modo, ogni tile viene estratta nel punto corretto ignorando margini e spazi vuoti.
+
+A seconda del costruttore usato, le righe e le colonne vengono determinate in due modi:
+
+1. **Tramite dimensioni note** (`tileWidth`, `tileHeight`, opzionalmente `margin` e `spacing`):  
+   - L'immagine viene suddivisa automaticamente in base alle dimensioni dichiarate.  
+   - Le tile vengono ritagliate con `getSubimage(...)`.
+
+2. **Tramite file `.solid.txt`**:  
+   - Se il costruttore non riceve esplicitamente le dimensioni delle tile, viene letto un file di testo con righe composte da caratteri `1` e `0`.  
+   - Ogni riga rappresenta una **riga di tile** e la **lunghezza della riga** determina il numero di colonne.  
+   - Esempio:
+     ```
+     00100
+     11100
+     00011
+     ```
+     In questo caso, il tileset ha `3` righe e `5` colonne.  
+   - L’altezza e la larghezza di ogni tile si calcolano dividendo la dimensione totale dell’immagine per il numero di righe e colonne.
+
+Una volta nota la griglia, tutte le tile vengono estratte e memorizzate nella matrice `tileImages[row][col]`, che consente un accesso diretto alle immagini.
+
+---
+
+### Attributi principali
+
+| Campo                      | Tipo                        | Descrizione |
+|---------------------------|-----------------------------|-------------|
+| `tileset`                 | `BufferedImage`             | L’immagine sorgente contenente tutte le tile |
+| `tileImages`              | `BufferedImage[][]`         | Matrice delle immagini delle singole tile |
+| `solidTiles`              | `boolean[][]`               | Mappa delle tile solide (`true` = solida) |
+| `animatedTiles`           | `Map<Point, List<Point>>`   | Mappa delle tile animate e dei loro frame |
+| `rows`, `cols`            | `int`                       | Numero di righe e colonne nel tileset |
+| `tileWidth`, `tileHeight` | `int`                       | Dimensione in pixel di ciascuna tile |
+| `numberOfFrames`          | `int`                       | Numero massimo di frame per una tile animata |
+
+---
+
+### Costruttori
+
+**`Tileset(String fileName, int frameWidth, int frameHeight)`**
+
+- Carica un tileset assumendo tile di dimensione fissa
+- Usa come default `margin = 0`, `spacing = 0`
+
+**`Tileset(String fileName)`**
+
+- Carica il tileset leggendo righe e colonne da un file `.solid.txt`
+
+**`Tileset(String fileName, int tileWidth, int tileHeight, int margin, int spacing)`**
+
+- Supporta tileset con margini e spaziatura (utile per sprite sheet esportati da **Tiled**)
+
+Tutti i costruttori caricano:
+
+- L’immagine principale
+- Le immagini delle tile (`tileImages`)
+- Le informazioni di solidità (`solidTiles`)
+- Le informazioni di animazione (`animatedTiles`)
+
+---
+
+### Metodi di supporto
+
+**`loadSolidMap(String fileName)`**
+
+- Legge da un file `.solid.txt` quali tile sono solide (`1`) e quali no (`0`)
+- Ogni riga del file rappresenta una riga di tile
+
+**`loadAnimationData(String fileName)`**
+
+- Legge da un file `.anim.txt` la lista di frame per ciascuna tile animata
+- Sintassi del file: `(y,x)->(frameY1,frameX1)(frameY2,frameX2)…`
+
+**`getTileDimensionsFromFile(String fileName)`**
+
+- Legge il file `.solid.txt` per determinare il numero di righe e colonne
+
+---
+
+### Gestione delle animazioni
+
+Le tile animate sono definite da una mappa:
+```java
+Map<Point, List<Point>> animatedTiles;
+```
+- **Chiave**: coordinate della tile animata
+- **Valore**: lista di frame (coordinate)
+
+Ogni frame viene recuperato da tileImages.
+
+Il metodo **`createTile(...)`** restituisce un oggetto Tile, che può essere:
+- **Statico**: una singola immagine
+- **Animato**: array di immagini e durata per frame
+
+Controlla anche la solidità usando solidTiles.
+
+Esempi:
+
+```java
+// Tile animata
+return new Tile(animatedImages, isSolid, row, col, duration);
+
+// Tile statica
+return new Tile(tileImage, isSolid, row, col);
+```
+
+La classe `Tileset` include diversi metodi getter per accedere ai dati interni. Ecco una panoramica:
+
+| Metodo                              | Ritorna           | Descrizione                                                                 |
+|-------------------------------------|-------------------|-----------------------------------------------------------------------------|
+| `getRows()`                         | `int`             | Numero di righe di tile nel tileset                                        |
+| `getCols()`                         | `int`             | Numero di colonne di tile nel tileset                                      |
+| `getTileWidth()`                    | `int`             | Larghezza di ogni tile in pixel                                            |
+| `getTileHeight()`                   | `int`             | Altezza di ogni tile in pixel                                              |
+| `getTileImage(int row, int col)`   | `BufferedImage`   | L'immagine della tile in posizione `(row, col)`                            |
+| `getTileImage(int index)`          | `BufferedImage`   | L'immagine della tile con indice lineare (scorrendo da sinistra a destra) |
+| `getAnimationFrames(tileX, tileY)` | `List<Point>`     | Lista dei frame animati associati alla tile, oppure `null` se non animata |
+| `getNumberOfFrames()`              | `int`             | Numero massimo di frame nelle animazioni                                   |
+
+Questi metodi permettono l’accesso controllato ai dati e sono utili per altri sistemi (come `TileManager`, `CollisionSystem`, o `Renderer`) che devono utilizzare il tileset.
+
+## 3. Tile
 La classe Tile, invece, rappresenta un singolo elemento (tile) di una mappa di gioco.
 
 Contiene uno o più frame (BufferedImage[] images).
