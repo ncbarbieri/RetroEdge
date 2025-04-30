@@ -413,6 +413,99 @@ int index = row * cols + col;
 
 **Nota**: Tiled parte a contare le tile da 1, mentre in Java gli array iniziano da 0, quindi spesso si usa tileNumber - 1 per ottenere l’indice corretto.
 
+## 6. `TileMapComponent`
+
+La classe `TileMapComponent` è un componente ECS che incapsula una `TileMap` e ne gestisce:
+- La **logica di animazione per le tile animate**
+- Il **rendering ottimizzato** tramite pre-rendering dei frame
+- L’accesso ai dati di **collisione**
+- Le dimensioni della mappa e della finestra visibile
+
+In altre parole, rappresenta la **vista logica e visuale** di una tilemap nel contesto del sistema di entità.
+
+---
+
+**Attributi principali**
+
+| Campo                  | Tipo                        | Descrizione |
+|------------------------|-----------------------------|-------------|
+| `tileMap`              | `TileMap`                   | Riferimento alla mappa di gioco sottostante |
+| `solidTiles`           | `boolean[][]`               | Mappa delle tile solide, utile per le collisioni |
+| `tileMapFrames`        | `BufferedImage[]`           | Array di immagini pre-renderizzate per ogni frame di animazione |
+| `tileWidth`, `tileHeight` | `int`                   | Dimensioni di una singola tile |
+| `visibleRows`, `visibleCols` | `int`               | Dimensioni visibili a schermo (in tile) |
+| `currentFrame`         | `int`                       | Frame corrente dell’animazione della mappa |
+| `totalFrames`          | `int`                       | Numero totale di frame disponibili |
+| `frameDuration`        | `float`                     | Durata di ogni frame animato |
+| `frameTimer`           | `float`                     | Timer per aggiornare l’animazione |
+| `collidedTiles`        | `Map<Point, Float>`         | Tile in collisione e relativi timer |
+
+---
+
+**Costruttore**
+
+```java
+public TileMapComponent(Entity entity, TileMap tileMap)
+```
+
+Inizializza il componente leggendo le informazioni dalla TileMap associata:
+- Preleva:
+   - Mappa di collisione (solidTiles)
+   - Frame e dimensioni tile
+   - Timer animazioni
+- Calcola le dimensioni visibili a schermo
+- Genera le immagini pre-renderizzate della mappa con generateTileMapFrames()
+
+**Rendering ottimizzato con `generateTileMapFrames()`**
+
+Il metodo `generateTileMapFrames()` pre-renderizza ogni frame dell’animazione della mappa in una BufferedImage.
+
+Per ogni frame:
+- Crea un’immagine vuota (tileMapImage)
+- Cicla su tutte le tile della mappa
+- Chiama tile.draw(...) passando il frame corrente (se animata) o 0 (se statica)
+- Salva l’immagine generata nell’array tileMapFrames
+
+Questo approccio migliora le prestazioni perché evita di ridisegnare ogni singola tile per ogni frame durante il gioco.
+
+**Logica dell’animazione**
+
+Metodo `update(float deltaTime)`
+- Aggiunge deltaTime al frameTimer
+- Quando il timer supera frameDuration, aggiorna il frame:
+  ```java
+  currentFrame = (currentFrame + 1) % totalFrames;
+  ```
+
+Metodo `getTileMapImage()`
+- Restituisce l’immagine da visualizzare in base al frame corrente:
+  ```java
+  return tileMapFrames[currentFrame];
+  ```
+
+**Gestione collisioni**
+
+Metodo `isSolidTile(int row, int col)`
+- Controlla se una tile è solida accedendo alla mappa solidTiles
+
+Metodo `getSolidBox(int row, int col)`
+- Restituisce un oggetto Rectangle che rappresenta l’area fisica occupata dalla tile, utile per il sistema di collisioni
+
+Metodo `getCollidedTiles()`
+- Restituisce la mappa delle tile con cui si è entrati in collisione, ciascuna associata a un timer (es. per effetti visivi o danno progressivo)
+
+**Altri metodi utili**
+| Metodo                              | Descrizione                                   |
+|-------------------------------------|-----------------------------------------------|
+| getTileMap()                        | Restituisce l’oggetto TileMap associato       |
+| getTileWidth() / getTileHeight()    | Dimensioni in pixel di una singola tile       |
+| getVisibleRows() / getVisibleCols() | Numero di righe e colonne visibili a schermo  |
+| getMapWidth() / getMapHeight()      | Dimensioni totali della mappa in tile         |
+
+Il rendering della mappa avviene all’interno del `RenderingSystem`, che si occupa di disegnare a schermo la `TileMap` pre-renderizzata e, se il **debug** è attivo, evidenzia le **tile solide** e quelle in **collisione**.
+
+---
+
 ## 7. Camera e FollowPlayer
 Nel contesto di un gioco 2D con mappa più grande della finestra visibile, la **camera** determina **quale porzione del mondo** viene effettivamente visualizzata a schermo.  
 L’interfaccia `Camera` e l’implementazione `FollowPlayer` gestiscono lo **scrolling della mappa** in modo che il **giocatore rimanga visibile**, con un comportamento fluido e controllato.
@@ -488,3 +581,39 @@ Durante l’aggiornamento (`update(float deltaTime)`)
 - La mappa non viene scrollata oltre i limiti, evitando di mostrare aree vuote.
 
 ## 8. Aggiunta di TileMap e Camera al metodo init dello stato
+
+Nel metodo init() dello stato di gioco (es. PlayState), è necessario:
+1. Creare l’entità TileManager
+2.	Creare il componente TileMapComponent
+3.	Aggiungere una Camera che segue il player
+4.	Aggiungere il RenderingSystem con la camera attiva
+
+**Codice da inserire in init()**
+
+- Prima del player (creazione mappa)
+  ```java
+  // Entity: TileManager
+  Entity tileManager = new Entity(EntityType.TILEMANAGER, 1);
+  TileMap world = new TileMap("/tiles/tilesheet.png", "/maps/map.txt", 0.16f); // 0.16s per frame animato
+  TileMapComponent tileMapComponent = new TileMapComponent(tileManager, world);
+  tileManager.addComponent(tileMapComponent);
+  add(tileManager);
+  ```java
+- Dopo il player (creazione camera)
+  ```java
+  // Camera
+  Camera camera = new FollowPlayer(world, player);
+  ```
+
+- Rendering system con supporto alla camera
+  ```java
+  add(new RenderingSystem(this.engine, camera));
+  ```
+
+
+**Comportamento atteso**
+- La tilemap viene disegnata una sola volta per frame, con supporto completo ad animazioni.
+- La camera mantiene il giocatore visibile all’interno di un’area centrale.
+- Se il debug è attivo:
+   - Le tile solide sono evidenziate con un rettangolo pieno.
+   - Le tile in collisione recente sono evidenziate in giallo trasparente, con l’intensità legata al tempo rimanente.
