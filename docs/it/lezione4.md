@@ -182,17 +182,57 @@ La classe `Tileset` include diversi metodi getter per accedere ai dati interni. 
 Questi metodi permettono l’accesso controllato ai dati e sono utili per altri sistemi (come `TileManager`, `CollisionSystem`, o `Renderer`) che devono utilizzare il tileset.
 
 ## 3. Tile
-La classe Tile, invece, rappresenta un singolo elemento (tile) di una mappa di gioco.
+La classe `Tile` rappresenta una singola tessera (tile) del mondo di gioco, che può essere **statica** (una sola immagine) oppure **animata** (più frame). Inoltre, gestisce anche la **solidità** (collisioni) e le **coordinate logiche** all’interno della griglia.
 
-Contiene uno o più frame (BufferedImage[] images).
-Può essere statica (1 frame) o animata (n frame).
-Attributi principali:
-solid → se vero la tile non è attraversabile.
-solidBox → rettangolo di collisione già posizionato nel mondo.
-collision / collisionCounter → usati solo in debug per tingere la tile in giallo quando riceve un urto.
-Metodi chiave
-draw(Graphics2D g, xOff, yOff, currentFrame) disegna la tile nella posizione corretta sottraendo gli offset di camera.
-collides() da chiamare quando qualcosa sbatte nella tile: abilita l’overlay giallo in debug.
+---
+
+### Attributi principali
+
+| Campo           | Tipo              | Descrizione |
+|----------------|-------------------|-------------|
+| `images`        | `BufferedImage[]` | Contiene uno o più frame associati alla tile |
+| `animated`      | `boolean`         | Indica se la tile è animata |
+| `solid`         | `boolean`         | Indica se la tile è solida (ostacolo) |
+| `solidBox`      | `Rectangle`       | Rettangolo usato per il rilevamento collisioni |
+| `row`, `column` | `int`             | Posizione logica della tile nella griglia |
+| `tileWidth`     | `int`             | Larghezza della tile in pixel |
+| `tileHeight`    | `int`             | Altezza della tile in pixel |
+
+---
+
+### Costruttori
+
+**`Tile(BufferedImage image, boolean solid, int row, int column)`**
+- Crea una tile **statica** (un solo frame)
+- Imposta `animated = false`
+
+**`Tile(BufferedImage[] animatedTileImages, boolean solid, int row, int column, float timePerFrame)`**
+- Crea una tile **animata** con una sequenza di immagini
+- Imposta `animated = true`
+- Il parametro `timePerFrame` viene passato ma non è usato direttamente qui (si presume che venga gestito altrove)
+
+**Costruttore interno privato**
+`private Tile(BufferedImage[] images, boolean solid, int row, int column, boolean animated, float timePerFrame)`
+- Inizializza i campi comuni
+- Calcola la solidBox, che è la bounding box per le collisioni in coordinate mondo
+
+### Metodi
+
+**`boolean isSolid()`**
+- Restituisce true se la tile è un ostacolo
+- Può essere usato nei sistemi di collisione
+
+**`Rectangle getSolidBox()`**
+- Restituisce una copia (clone) del rettangolo di collisione (solidBox)
+- Utile per verificare collisioni senza alterare l’oggetto originale
+
+**`void draw(Graphics2D g, int xOffset, int yOffset, int frameNumber)`**
+- Disegna la tile a video, con supporto per scrolling (xOffset, yOffset)
+- Se la tile è animata, usa il frameNumber specificato
+- Se è statica, disegna sempre `images[0]`
+
+**`boolean isAnimated()`**
+- Indica se la tile è animata o statica
 
 ## 4 GESTIRE UNA MAPPA COMPLETA – TileManager (astratto)
 
