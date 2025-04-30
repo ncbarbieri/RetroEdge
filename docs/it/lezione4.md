@@ -79,17 +79,33 @@ leggere la matrice numerica,
 riempire tileMap con Tile statiche o animate,
 impostare parametri di animazione (numberOfFrames, frameDuration).
 
-## 5 UNA CAMERA CHE SEGUE IL PLAYER – FollowPlayer
+## 5 Tool di Configurazione: TileSet Editor
+
+Per semplificare la definizione delle tile animate e delle tile solide prima dell'avvio del gioco, è stata creata un'applicazione di configurazione composta da tre componenti principali:
+- MainApp: avvia l'interfaccia grafica e gestisce il caricamento/salvataggio del file di configurazione.
+- TilesetPanel: mostra l'intero tileset e permette di selezionare singole tile; offre due modalità di markup:
+- Solid Mode: cliccando su una tile se ne imposta la forma di collisione (bounding box) tramite un rettangolo regolabile.
+- Animate Mode: selezione di più tile in sequenza e definizione del frameDuration per ciascuna animazione.
+- AnimationPanel: anteprima in tempo reale delle animazioni definite, con controlli per avviare/pausare e modificare la velocità.
+
+Questa applicazione aiuta a generare un file di mappa testuale che include:
+- L'elenco degli indici delle tile animate, ordinato per sequenza.
+- I parametri di durata dei frame per ciascuna animazione.
+- Le coordinate e dimensioni delle bounding box per le tile solide.
+
+Il file di configurazione risultante può essere caricato dal TileManager all'interno del gioco, semplificando l'inizializzazione di mappe complesse e personalizzate.
+
+## 6 UNA CAMERA CHE SEGUE IL PLAYER – FollowPlayer
 
 Implementa Camera con:
 quattro bordi interni (20 % del lato finestra) che definiscono la “zona sicura”;
 quando il player esce da quella zona la camera aggiorna xOffset/yOffset;
 il movimento è limitato da maxOffsetX/Y per non mostrare bordi vuoti.
 
-## 6 METODO init DELLO STATO – AGGIUNTA DI MAPPA E CAMERA
+## 7 METODO init DELLO STATO – AGGIUNTA DI MAPPA E CAMERA
 
 
-## 7 FLUSSO COMPLETO NEL GAME LOOP
+## 8 FLUSSO COMPLETO NEL GAME LOOP
 
 InputSystem legge la tastiera → aggiorna ActionStateManager.
 MotionSystem usa i flag di input e la gravità per aggiornare velocità / posizione.
