@@ -385,6 +385,34 @@ Per creare facilmente una mappa, si può usare [Tiled](https://www.mapeditor.org
 5. **Salva in un file .txt**
    - Il file può essere caricato direttamente dalla classe TileMap  
 
+### Differenza tra coordinate (riga, colonna) e indice lineare
+
+Quando si accede alle tile nel tileset o nella mappa, è importante distinguere tra:
+
+1. **Coordinate (riga, colonna)**
+   - Utilizzate per accedere alla matrice di immagini tileImages[row][col]
+   - Molto intuitive quando si lavora con una griglia
+   ```java
+   BufferedImage img = tileImages[2][3]; // Riga 2, colonna 3
+   ```
+
+2. **Indice lineare**
+   - È il formato usato nella mappa esportata da Tiled (es. `data: [1,1,1,1,1,...]`)
+   - Conta da sinistra a destra, riga per riga
+
+Per convertire tra i due formati, si usa il seguente codice:
+
+```java
+// Da indice a coordinate
+int row = index / cols;
+int col = index % cols;
+
+// Da coordinate a indice
+int index = row * cols + col;
+```
+
+**Nota**: Tiled parte a contare le tile da 1, mentre in Java gli array iniziano da 0, quindi spesso si usa tileNumber - 1 per ottenere l’indice corretto.
+
 ## 6 UNA CAMERA CHE SEGUE IL PLAYER – FollowPlayer
 
 Implementa Camera con:
