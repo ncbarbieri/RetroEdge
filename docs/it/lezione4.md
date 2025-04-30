@@ -338,6 +338,52 @@ Combina:
 - Divide i valori con split(",")
 - Converte i numeri in interi e li inserisce nella griglia
 
+---
+
+### Creare una mappa con **Tiled**
+
+Per creare facilmente una mappa, si può usare [Tiled](https://www.mapeditor.org/), un editor gratuito per tilemap. La procedura consigliata è la seguente:
+
+1. **Crea un nuovo tileset**  
+   - Vai su **Map → New Tileset**  
+   - Imposta correttamente la **larghezza** e **altezza delle tile** (es. 32×32)  
+   - Aggiungi il file `.png` del tileset  
+   - Se ci sono margini o spazi tra le tile, specifica `margin` e `spacing` come in Tiled
+
+2. **Disegna la mappa**  
+   - Crea una nuova mappa e inizia a disporre le tile sulla griglia
+
+3. **Esporta la mappa in formato JavaScript**  
+   - Vai su **File → Export As...**  
+   - Seleziona **Tile map files (*.js)**  
+   - Questo genererà un file `.js` contenente un oggetto JavaScript che include la mappa in una variabile, ad esempio:
+
+   ```js
+   var map = {
+       width: 5,
+       height: 4,
+       layers: [{
+           data: [
+               1, 1, 1, 1, 1,
+               1, 0, 0, 0, 1,
+               1, 0, 2, 0, 1,
+               1, 1, 1, 1, 1
+           ]
+       }]
+   };
+   ```
+
+4. **Estrai la matrice di tile**  
+   - Copia il contenuto dell’array data
+   - Riformattalo come griglia con righe separate da newline e valori separati da virgole:
+   ```
+   1,1,1,1,1
+   1,0,0,0,1
+   1,0,2,0,1
+   1,1,1,1,1
+   ```
+5. **Salva in un file .txt**
+   - Il file può essere caricato direttamente dalla classe TileMap  
 
 ## 6 UNA CAMERA CHE SEGUE IL PLAYER – FollowPlayer
 
