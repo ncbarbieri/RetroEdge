@@ -47,7 +47,7 @@ Tileset incapsula un’immagine («tilesheet») e la divide in sotto-immagini di
 Costruttore Tileset(String fileName, int tileW, int tileH, int margin, int spacing)
 Carica l’immagine con ImageIO.read.
 Calcola righe / colonne in base a dimensioni, margine, spaziatura.
-Ritaglia ogni tile con getSubimage e lo salva in tileImages[row][col].
+Ritaglia ogni tile con getSubimage e lo salva in `tileImages[row][col]`.
 Metodi di utilità
 getTileImage(int index) (sequenziale)
 getTileImage(int row,int col) (coordinato)
@@ -69,7 +69,7 @@ collides() da chiamare quando qualcosa sbatte nella tile: abilita l’overlay gi
 
 Fornisce lo scheletro per:
 caricare da file di testo (metodi loadMap e loadSolidMap),
-mantenere Tile[][] tileMap,
+mantenere `Tile[][] tileMap`,
 aggiornare l’animazione interna (update avanza currentFrame ogni frameDuration),
 disegnare solo l’area visibile (draw calcola la prima riga/colonna visibile tramite gli offset della camera).
 
