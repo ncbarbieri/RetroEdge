@@ -390,7 +390,7 @@ Per creare facilmente una mappa, si può usare [Tiled](https://www.mapeditor.org
 Quando si accede alle tile nel tileset o nella mappa, è importante distinguere tra:
 
 1. **Coordinate (riga, colonna)**
-   - Utilizzate per accedere alla matrice di immagini tileImages[row][col]
+   - Utilizzate per accedere alla matrice di immagini `tileImages[row][col]`
    - Molto intuitive quando si lavora con una griglia
    ```java
    BufferedImage img = tileImages[2][3]; // Riga 2, colonna 3
@@ -413,23 +413,78 @@ int index = row * cols + col;
 
 **Nota**: Tiled parte a contare le tile da 1, mentre in Java gli array iniziano da 0, quindi spesso si usa tileNumber - 1 per ottenere l’indice corretto.
 
-## 6 UNA CAMERA CHE SEGUE IL PLAYER – FollowPlayer
+## 7. Camera e FollowPlayer
+Nel contesto di un gioco 2D con mappa più grande della finestra visibile, la **camera** determina **quale porzione del mondo** viene effettivamente visualizzata a schermo.  
+L’interfaccia `Camera` e l’implementazione `FollowPlayer` gestiscono lo **scrolling della mappa** in modo che il **giocatore rimanga visibile**, con un comportamento fluido e controllato.
 
-Implementa Camera con:
-quattro bordi interni (20 % del lato finestra) che definiscono la “zona sicura”;
-quando il player esce da quella zona la camera aggiorna xOffset/yOffset;
-il movimento è limitato da maxOffsetX/Y per non mostrare bordi vuoti.
+---
 
-## 7 METODO init DELLO STATO – AGGIUNTA DI MAPPA E CAMERA
+### Interfaccia `Camera`
 
+```java
+public interface Camera {
+    void update(float deltaTime);
+    int getxOffset();
+    int getyOffset();
+}
+```
+I metodi che devono essere implementati sono:
+- **`update(float deltaTime)`**: aggiorna la posizione della camera nel tempo
+- **`getxOffset() / getyOffset()`**: restituiscono lo spostamento (offset) della camera rispetto all’origine della mappa
 
-## 8 FLUSSO COMPLETO NEL GAME LOOP
+Questi offset sono usati per calcolare la posizione a schermo di ogni elemento del mondo di gioco.
 
-InputSystem legge la tastiera → aggiorna ActionStateManager.
-MotionSystem usa i flag di input e la gravità per aggiornare velocità / posizione.
-AnimationSystem decide action / direction dal MotionComponent → avanza i frame sprite.
-Camera (FollowPlayer) aggiorna gli offset in base al player.
-TileManagers avanzano eventuali tile animate.
-RenderingSystem disegna nell’ordine:
+---
 
-Risultato: il personaggio scorre in una mappa grande, la telecamera lo segue, le tile animate si muovono e le collisioni solide sono visualizzate in rosso (tasto 0 in debug).
+### Classe FollowPlayer
+
+Questa classe implementa una camera centrata sul giocatore, ma non in modo rigido: il giocatore si può muovere liberamente in una zona centrale dello schermo, definita da una “box” virtuale.
+
+**Attributi principali**
+
+| Campo                                 | Tipo                | Descrizione                                                                 |
+|---------------------------------------|---------------------|-----------------------------------------------------------------------------|
+| `pc`                                  | `MotionComponent`   | Posizione attuale del giocatore (X, Y)                                      |
+| `xOffset, yOffset`                    | `int`               | Offset della camera rispetto alla mappa                                     |
+| `leftBorder, rightBorder`             | `int`               | Margini orizzontali interni alla finestra                                   |
+| `topBorder, bottomBorder`             | `int`               | Margini verticali interni alla finestra                                     |
+| `maxOffsetX, maxOffsetY`              | `int`               | Offset massimo oltre il quale non si può scrollare                          |
+| `frameWidth, frameHeight`             | `int`               | Dimensione dello sprite del giocatore                                       |
+
+**Calcolo dell’offset**
+
+Nel costruttore:
+- I bordi interni vengono definiti come percentuali dello schermo (es. 20% a sinistra/destra).
+- Gli offset massimi sono calcolati sulla base delle dimensioni della mappa e dello schermo visibile:
+  ```java
+  maxOffsetX = (mapWidth - visibleCols) * tileWidth;
+  maxOffsetY = (mapHeight - visibleRows) * tileHeight;
+  ```
+- L’offset iniziale è centrato sul giocatore:
+  ```java
+  xOffset = playerX - GAME_WIDTH / 2;
+  yOffset = playerY - GAME_HEIGHT / 2;
+  ```
+
+Durante l’aggiornamento (`update(float deltaTime)`)
+1. Confronto con i bordi visivi:
+   - Se il giocatore si avvicina troppo al bordo destro/sinistro o alto/basso del riquadro interno, l’offset viene aggiornato per spostare la camera.
+   - Il movimento della camera avviene solo quando il giocatore esce dai bordi di sicurezza:
+     ```java
+     if (playerX - xOffset > rightBorder) { ... }
+     if (playerX - xOffset < leftBorder) { ... }
+     ```
+2. Clamping degli offset:
+   - Gli offset vengono limitati per evitare che la camera vada fuori dalla mappa:
+     ```java
+     if (xOffset > maxOffsetX) xOffset = maxOffsetX;
+     if (xOffset < 0) xOffset = 0;
+     ```
+     
+**Comportamento visivo**
+
+- Il giocatore può muoversi liberamente in un rettangolo centrale dello schermo (20% - 80% di larghezza/altezza).
+- Quando esce da quest’area, la camera lo segue.
+- La mappa non viene scrollata oltre i limiti, evitando di mostrare aree vuote.
+
+## 8. Aggiunta di TileMap e Camera al metodo init dello stato
