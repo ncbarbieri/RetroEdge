@@ -234,28 +234,14 @@ La classe `Tile` rappresenta una singola tessera (tile) del mondo di gioco, che 
 **`boolean isAnimated()`**
 - Indica se la tile è animata o statica
 
-## 4 GESTIRE UNA MAPPA COMPLETA – TileManager (astratto)
+## 4. Tool di Configurazione: TileSet Editor
 
-Fornisce lo scheletro per:
-caricare da file di testo (metodi loadMap e loadSolidMap),
-mantenere `Tile[][] tileMap`,
-aggiornare l’animazione interna (update avanza currentFrame ogni frameDuration),
-disegnare solo l’area visibile (draw calcola la prima riga/colonna visibile tramite gli offset della camera).
-
-Ogni sottoclasse implementa init() per:
-istanziare un Tileset,
-leggere la matrice numerica,
-riempire tileMap con Tile statiche o animate,
-impostare parametri di animazione (numberOfFrames, frameDuration).
-
-## 5 Tool di Configurazione: TileSet Editor
-
-Per semplificare la definizione delle tile animate e delle tile solide prima dell'avvio del gioco, è stata creata un'applicazione di configurazione composta da tre componenti principali:
-- MainApp: avvia l'interfaccia grafica e gestisce il caricamento/salvataggio del file di configurazione.
-- TilesetPanel: mostra l'intero tileset e permette di selezionare singole tile; offre due modalità di markup:
-- Solid Mode: cliccando su una tile se ne imposta la forma di collisione (bounding box) tramite un rettangolo regolabile.
-- Animate Mode: selezione di più tile in sequenza e definizione del frameDuration per ciascuna animazione.
-- AnimationPanel: anteprima in tempo reale delle animazioni definite, con controlli per avviare/pausare e modificare la velocità.
+Per semplificare la definizione delle tile animate e delle tile solide prima dell'avvio del gioco, nel package utils si trova un'applicazione di configurazione composta da tre componenti principali:
+- **MainApp**: avvia l'interfaccia grafica e gestisce il caricamento/salvataggio del file di configurazione.
+- **TilesetPanel**: mostra l'intero tileset e permette di selezionare singole tile; offre due modalità di markup:
+   - Solid Mode: cliccando su una tile se ne imposta la forma di collisione (bounding box) tramite un rettangolo regolabile.
+   - Animate Mode: selezione di più tile in sequenza e definizione del frameDuration per ciascuna animazione.
+- **AnimationPanel**: anteprima in tempo reale delle animazioni definite, con controlli per avviare/pausare e modificare la velocità.
 
 Questa applicazione aiuta a generare un file di mappa testuale che include:
 - L'elenco degli indici delle tile animate, ordinato per sequenza.
@@ -263,6 +249,95 @@ Questa applicazione aiuta a generare un file di mappa testuale che include:
 - Le coordinate e dimensioni delle bounding box per le tile solide.
 
 Il file di configurazione risultante può essere caricato dal TileManager all'interno del gioco, semplificando l'inizializzazione di mappe complesse e personalizzate.
+
+## 5. TileMap
+
+La classe `TileMap` rappresenta una **mappa composta da tile**, costruita a partire da:
+- Un **tileset** (immagine `.png` + file `.solid.txt` e `.anim.txt`)
+- Un file **mappa** (`.txt`) con valori numerici che indicano quali tile usare
+
+Offre funzionalità per:
+- Costruzione della griglia logica (`Tile[][]`)
+- Calcolo di dimensioni del mondo
+- Accesso alle tile, al layout e alla mappa di collisione
+- Supporto per tile animate e visibilità della porzione di mappa su schermo
+
+---
+
+### Attributi principali
+
+| Campo             | Tipo                        | Descrizione |
+|------------------|-----------------------------|-------------|
+| `tileMap`         | `Tile[][]`                 | Griglia bidimensionale di tile |
+| `tileWidth`       | `int`                      | Larghezza in pixel di una tile |
+| `tileHeight`      | `int`                      | Altezza in pixel di una tile |
+| `visibleRows`     | `int`                      | Numero di righe visibili a schermo |
+| `visibleCols`     | `int`                      | Numero di colonne visibili a schermo |
+| `numberOfFrames`  | `int`                      | Numero massimo di frame nelle tile animate |
+| `frameDuration`   | `float`                    | Durata di un frame animato (in secondi) |
+| `collidedTiles`   | `Map<Point, Float>`        | Mappa delle tile in collisione con relativo timer |
+
+---
+
+### Costruttore principale
+
+```java
+public TileMap(String tilesetFile, String mapFile, float frameDuration)
+```
+
+Il costruttore principale esegue le seguenti operazioni:
+- Carica il tileset da file
+- Carica la mappa leggendo le dimensioni e i valori da mapFile
+- Crea una griglia di Tile usando tileset.createTile(...)
+- Imposta la durata dei frame e le dimensioni visibili in base a GamePanel.GAME_WIDTH e GAME_HEIGHT
+
+### Caricamento della mappa
+
+La mappa viene salvata in un file .txt. Gli elementi sulla stessa riga vengono separati da una virgola, come nel seguente esempio:
+
+```
+1,1,2,2,3
+1,0,0,2,3
+4,4,4,0,0
+```
+
+- Ogni numero rappresenta l’indice di una tile nel tileset
+- Il valore 0 indica una tile vuota (null)
+- I valori vengono caricati nella griglia tramite loadMap(...)
+
+### Metodi principali
+
+- Dimensioni e accesso
+
+| Metodo                              | Ritorna           | Descrizione                                                                 |
+|---------------------------------------|-------------------|-----------------------------------------------------------------------------|
+| `getTile(int row, int col)`           | `Tile`            | Restituisce la tile in una posizione specifica                               |
+| `getMapWidth() / getMapHeight()`      | `int`             | Numero di colonne / righe nella mappa                                        |
+| `getWorldWidth() / getWorldHeight()`  | `int`             | Dimensioni del mondo in pixel                                               |
+| `getVisibleCols() / getVisibleRows()` | `int`             | Numero di tile visibili a schermo                                           |
+
+- Tile e proprietà
+
+| Metodo                              | Ritorna           | Descrizione                                                                 |
+|---------------------------------------|---------------------|-----------------------------------------------------------------------------|
+| `getSolidMap()`                       | `boolean[][]`       | Mappa che indica quali tile sono solide                                     |
+| `getCollidedTiles()`                  | `Map<Point, Float>` | Restituisce le tile con cui si è in collisione (e timer)                    |
+| `getTileWidth() / getTileHeight()`    | `int`               | Dimensioni di una tile                                                      |
+| `getNumberOfFrames()`                 | `int`               | Numero massimo di frame per tile animate                                    |
+| `getFrameDuration()`                  | `float`             | Durata in secondi di ogni frame animato                                     |
+
+### Caricamento interno
+
+**`getMap(...)`**
+Combina:
+- getMapDimensionsFromFile() → conta righe e colonne del file
+- loadMap() → carica i valori numerici in una matrice `int[][]`
+
+**`loadMap(...)`**
+- Legge ogni riga del file .txt
+- Divide i valori con split(",")
+- Converte i numeri in interi e li inserisce nella griglia
+
 
 ## 6 UNA CAMERA CHE SEGUE IL PLAYER – FollowPlayer
 
