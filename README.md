@@ -1,5 +1,4 @@
-# RetroEdge
-Retro Edge - Retro Educational Development Game Engine
+# RetroEdge - Retro Educational Development Game Engine
 
 RetroEdge is a lightweight 2D game engine designed with educational goals in mind. It provides a simple yet modern framework to help students learn the core concepts of game development without being overwhelmed by technical complexity.
 
