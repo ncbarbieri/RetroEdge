@@ -598,7 +598,7 @@ Nel metodo init() dello stato di gioco (es. PlayState), è necessario:
   TileMapComponent tileMapComponent = new TileMapComponent(tileManager, world);
   tileManager.addComponent(tileMapComponent);
   add(tileManager);
-  ```java
+  ```
 - Dopo il player (creazione camera)
   ```java
   // Camera
