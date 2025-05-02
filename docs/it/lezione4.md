@@ -6,7 +6,7 @@ La tecnica consisteva nel disegnare il mondo, ovvero la mappa del livello, grazi
 Le Tiles venivano mappate per ricostruire il mondo vero e proprio grazie a un array bidimensionale, matrice che poteva essere usata anche per la logica del gioco stesso (per esempio per gestire le collisioni dei personaggi con lo sfondo).
 Questo permetteva di creare mondi estesi senza doverne memorizzare l’intera immagine, troppo oneroso per la quantità di RAM disponibile al tempo.
 
-Tutte le Tiles venivano memorizzate in un’unica immagine, chiamata tileset, atlas o spritesheet, che veniva usata soltanto per la porzione corrispondente alla Tile da disegnare.
+Tutte le Tiles venivano memorizzate in un’unica immagine, chiamata [tileset](https://en.wikipedia.org/wiki/Tile-based_video_game), atlas o spritesheet, che veniva usata soltanto per la porzione corrispondente alla Tile da disegnare.
 Per la tecnica delle tilemaps, sono necessarie le seguenti informazioni:
 - **Tile size**: la dimensione di una singola Tile in pixels (in orizzontale e in verticale);
 - **Image atlas**: l’immagine contenente le Tiles;
