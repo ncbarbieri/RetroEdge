@@ -392,9 +392,7 @@ Quando si accede alle tile nel tileset o nella mappa, è importante distinguere 
 1. **Coordinate (riga, colonna)**
    - Utilizzate per accedere alla matrice di immagini `tileImages[row][col]`
    - Molto intuitive quando si lavora con una griglia
-   ```java
-   BufferedImage img = tileImages[2][3]; // Riga 2, colonna 3
-   ```
+   `BufferedImage img = tileImages[2][3]; // Riga 2, colonna 3`
 
 2. **Indice lineare**
    - È il formato usato nella mappa esportata da Tiled (es. `data: [1,1,1,1,1,...]`)
