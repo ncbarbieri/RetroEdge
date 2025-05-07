@@ -10,6 +10,8 @@ Project Goals:
 - **Modern techniques**: Apply industry-standard practices such as ECS, state machines, and real-time rendering.
 - **Step-by-step learning**: Offer a lesson-based structure that gradually introduces new concepts.
 - **Hands-on projects**: Allow students to build their own ARPG game while learning foundational programming and game design skills.
+- **Advanced Java practice**: Provide a structured environment for practicing advanced Java concepts, including multithreading, object-oriented design, and collection frameworks.
+- **Complex project management**: Help students gain experience working on a modular, multi-class codebase similar to real-world software projects.
 
 RetroEdge is ideal for high school students approaching game development for the first time.
 
