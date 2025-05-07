@@ -274,8 +274,7 @@ Nota: Le collisioni tra due entità STATIC non vengono gestite dal sistema. Se d
 
 ## 7. Esempio d'uso
 
-Durante l’inizializzazione dello stato, configuriamo il giocatore con i componenti di collisione e aggiungiamo il sistema globale.
-
+Durante l’inizializzazione dello stato, configuriamo il giocatore con i componenti di collisione e aggiungiamo il sistema globale. Facciamo attenzione alla posizione iniziale del giocatore: se è in collisione con una tile, non potrà muoversi.
 ```java
 @Override
 public void init() {
