@@ -310,7 +310,7 @@ public void init() {
     player.addComponent(playerCollisionMap);
 
     // 4. Registrazione del player nel motore
-    engine.addEntity(player);
+    add(player);
 
     // 5. Creazione della camera:
     Camera camera = (Camera) new FollowPlayer(world, player);
