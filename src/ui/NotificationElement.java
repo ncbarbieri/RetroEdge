@@ -1,0 +1,64 @@
+package ui;
+
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import engine.components.MotionComponent;
+import engine.Entity;
+
+public class NotificationElement extends UIElement {
+    private BufferedImage[] frames;
+    private int currentFrame;
+    private float frameDuration;
+    private float elapsedTime;
+    private Entity trackedEntity;
+    private int offsetX, offsetY;
+
+    public NotificationElement(int offsetX, int offsetY, int zIndex, Entity entity, UISpritesheet spritesheet, float frameDuration) {
+        super(0, 0, zIndex);
+        this.frames = spritesheet.getImages();
+        this.trackedEntity = entity;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.frameDuration = frameDuration;
+        this.currentFrame = 0;
+        this.elapsedTime = 0f;
+
+        // This element tracks an entity in the game world, so it should use camera offsets
+        setUseCameraOffsets(true);
+    }
+
+    @Override
+    public void update(float deltaTime) {
+        if (!isVisible() || frames == null || frames.length == 0) return;
+        elapsedTime += deltaTime;
+        if (elapsedTime >= frameDuration) {
+            elapsedTime = 0;
+            currentFrame = (currentFrame + 1) % frames.length;
+        }
+    }
+
+    @Override
+    public void render(Graphics2D g, int cameraX, int cameraY) {
+        if (!isVisible() || frames == null || frames[currentFrame] == null) return;
+
+        MotionComponent position = trackedEntity.getComponent(MotionComponent.class);
+        if (position == null) return;
+
+        // Convert world position to element’s position
+        int worldX = (int) position.getX() + offsetX;
+        int worldY = (int) position.getY() + offsetY;
+
+        // If usesCameraOffsets is true, subtract camera offsets
+        if (usesCameraOffsets()) {
+            worldX -= cameraX;
+            worldY -= cameraY;
+        }
+
+        g.drawImage(frames[currentFrame], worldX, worldY, null);
+    }
+
+    public void resetAnimation() {
+        this.currentFrame = 0;
+        this.elapsedTime = 0f;
+    }
+}
