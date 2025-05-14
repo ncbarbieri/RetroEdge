@@ -4,14 +4,18 @@
 - Implementare meccaniche di interazione nel mondo di gioco.
 - Creare oggetti raccoglibili generici.
 - Gestire attributi specifici del giocatore.
+- Gestire musica ed effetti sonori
 
 ## 1. Introduzione all’interazione con gli oggetti
 
-Un gioco diventa più coinvolgente quando offre possibilità di interazione con oggetti o personaggi. In questa lezione impareremo a introdurre meccaniche interattive, come la raccolta di oggetti utili.
+Un gioco diventa più coinvolgente quando offre possibilità di interazione con oggetti o personaggi ed è accompagnato da musica ed effetti sonori. In questa lezione impareremo a introdurre meccaniche interattive, come la raccolta di oggetti utili, e a riprodurre musica ed effetti sonori.
 
 Le classi coinvolte sono:
 - InteractionComponent
+- CollisionSystem
 - InteractionSystem
+- PlayerComponent
+- AudioManager
 
 ## 2. InteractionComponent
 
@@ -21,7 +25,7 @@ Attributi:
 
 InteractionComponent utilizza principalmente le seguenti strutture dati e tipi funzionali:
 - `Boolean interactable`: Indica se l’entity può interagire o meno. Permette di abilitare o disabilitare le interazioni dinamicamente.
-- `Consumer onEntityInteract`: È una funzione che accetta come parametro un oggetto di tipo Entity. Quando un’entità entra in interazione con un’altra, questo metodo definisce la logica da eseguire.
+- `Consumer onEntityInteract`: Il comportamento del Consumer viene descritto da una funzione lambda che accetta come parametro un oggetto di tipo Entity. Quando un’entità entra in interazione con un’altra, questo metodo definisce la logica da eseguire.
 - `Consumer<Set> onTileInteract`: È una funzione che accetta come parametro un insieme (Set) di nodi (Node). Quando l’entità interagisce con tiles specifiche della mappa, questo metodo viene invocato per gestire l’interazione.
 - `Set interactionSet`: Un insieme utilizzato per mantenere un elenco di entità che hanno interagito (o stanno interagendo) con questa entità. Essendo un Set, assicura l’unicità degli elementi evitando duplicati.
 - `Set collisionTiles`: Un insieme che memorizza i nodi (o tiles) specifici che stanno interagendo (sono in collisionne) con l’entità corrente. Permette una gestione flessibile e precisa delle collisioni con il terreno.
@@ -40,7 +44,36 @@ Punti chiave:
 - **Gestione dinamica**: La possibilità di abilitare/disabilitare dinamicamente l’interattività di un’entità offre flessibilità nella progettazione delle meccaniche di gioco.
 - **Efficienza nella gestione delle interazioni**: Usare strutture come HashSet garantisce un controllo rapido delle interazioni evitando duplicati e consentendo una gestione efficiente delle collisioni.
 
-## 3. InteractionSystem
+## 3. CollisionSystem
+
+Il CollisionSystem svolge un ruolo cruciale nella rilevazione e gestione delle interazioni fra entità e tra entità e tiles della mappa. Sebbene il suo compito primario sia la risoluzione delle collisioni fisiche, esso identifica anche le collisioni come eventi interattivi, notificando queste informazioni all’InteractionComponent.
+
+L’interazione avviene principalmente in due contesti:
+1. Collisioni tra Entità e Tilemap: Quando un’entità collide con una tile solida, il sistema identifica le tile coinvolte e le registra tramite l’InteractionComponent. Punti chiave:
+    - Set di nodi (Node): il sistema usa un `Set<Node>` per raccogliere le tiles con cui l’entità è in collisione.
+    - Aggiornamento dinamico: Il set viene aggiornato ogni frame, assicurando che l’InteractionComponent abbia sempre informazioni aggiornate.
+2. Collisioni tra Entità: Il sistema gestisce anche l’interazione tra entità diverse. Punti chiave:
+    - Mutua registrazione: ogni entità registra l’altra, permettendo una gestione bidirezionale dell’interazione.
+    - Gestione del set di interazioni: Anche qui, un `Set<Entity>` viene aggiornato dinamicamente per tracciare tutte le entità coinvolte.
+
+Metodi rilevanti per interazioni:
+- `resolveTileCollisions()`: Raccoglie e registra automaticamente le tile interagenti, aggiornando l’InteractionComponent.
+- `handleCollision()`: Rileva collisioni tra entità e aggiorna immediatamente l’insieme delle entità coinvolte.
+- `findCollisionsInRect()` e `canMove()`: Supportano la rilevazione dettagliata delle tiles specifiche coinvolte nella collisione, rendendo possibile identificare esattamente quali aree della mappa interagiscono con un’entità.
+
+Strutture dati e gestione interazioni:
+- Set di nodi (`Set<Node> collisions`): utilizzato per identificare rapidamente tutte le tiles coinvolte in un’interazione con entità.
+- Aggiornamento coerente e sicuro: I set vengono svuotati (clear) e riempiti (add o addAll) ogni ciclo di aggiornamento, mantenendo sempre informazioni fresche e accurate.
+
+Vantaggi:
+- Integrazione fluida con l’InteractionComponent: Il CollisionSystem delega alla struttura InteractionComponent la gestione effettiva delle logiche interattive, limitandosi a fornire informazioni accurate sugli eventi di collisione/interazione.
+- Modularità e chiarezza: I due tipi di interazione (entity-tile e entity-entity) sono ben distinti e gestiti separatamente, mantenendo il codice ordinato e comprensibile.
+- Performance: L’uso dei Set garantisce che l’informazione sulle interazioni sia registrata in modo efficiente, senza duplicati e con accesso rapido.
+- Flessibilità: Il sistema permette facilmente di aggiungere nuove tipologie di interazioni semplicemente implementando ulteriori logiche basate sui set già esistenti.
+
+Il CollisionSystem, in sintesi, identifica e raccoglie informazioni dettagliate sulle collisioni e le passa al componente InteractionComponent. Questo approccio permette di separare chiaramente la responsabilità della rilevazione e risoluzione delle collisioni fisiche da quella della gestione della logica interattiva, consentendo così un’architettura di gioco robusta, efficiente e facilmente espandibile.
+
+## 4. InteractionSystem
 
 InteractionSystem gestisce in modo centralizzato tutte le interazioni che avvengono tra le entità nel gioco, occupandosi sia di interazioni dirette (entity-entity) sia delle interazioni tra entità e tiles della mappa di gioco. Questo sistema controlla e risponde dinamicamente agli eventi di interazione e prossimità, avviando dialoghi, raccogliendo oggetti o attivando meccanismi di gioco.
 
@@ -49,7 +82,7 @@ La logica di interazione è suddivisa in due fasi principali:
 1. Elaborazione delle interazioni:
     - Cicla su tutte le entità con un InteractionComponent.
     - Chiama il metodo `handleInteraction()` per ciascuna entità, gestendo le interazioni accumulate durante il ciclo.
-2. Gestione delle interazioni basate su prossimità:
+2. Gestione delle interazioni basate su prossimità (che verranno approfondite successivamente):
     - Per ogni entità dotata di ProximityComponent, verifica se altre entità entrano nel raggio di prossimità stabilito.
     - Usa `updateEntityPair()` per aggiornare dinamicamente lo stato delle interazioni basate sulla vicinanza tra coppie di entità.
 
@@ -89,11 +122,28 @@ Flessibilità del sistema:
 - Altamente configurabile, grazie alla possibilità di definire logiche personalizzate tramite i componenti (InteractionComponent, DialogueComponent).
 - Facilmente espandibile per integrare nuovi tipi di interazioni.
 
+## 5. AudioManager
 
-5. PlayerComponent (attributi giocatore)
+L'AudioManager è una classe centrale per la gestione dell'audio nel gioco, inclusi effetti sonori e musica di sottofondo. Questa classe permette di caricare, controllare e riprodurre file audio.
 
-PlayerComponent tiene traccia delle proprietà specifiche del giocatore, come il numero di gemme raccolte.
+Le funzioni Principali dell'AudioManager sono:
+- Caricamento Audio: Carica brani musicali e effetti sonori da file, creando per ciascuno un oggetto Clip che può essere controllato (riprodotto, fermato, ripetuto).
+- Controllo del Volume: Modifica il volume di canzoni ed effetti sonori. Il volume è unificato per tutti gli effetti sonori e separatamente per le canzoni, permettendo una facile regolazione dell'audio di sottofondo rispetto agli effetti di gioco.
+- Play e Stop: Fornisce metodi per riprodurre o fermare specifiche tracce audio e effetti sonori, incluso il supporto per la riproduzione in loop di brani di sottofondo.
+- Mute/Unmute: Permette di attivare o disattivare l'audio delle canzoni o degli effetti sonori separatamente, utile per implementare funzioni di silenziamento audio nelle impostazioni del gioco.
 
+I metodi a disposizione sono:
+- `loadSongs` e `loadEffects`: Questi metodi caricano rispettivamente le tracce musicali e gli effetti sonori forniti come array di nomi di file, inizializzando gli array songs ed effects con le Clip corrispondenti.
+- `getClip`: Questo metodo ausiliario carica un singolo file audio e lo prepara per la riproduzione, utilizzando `AudioSystem.getClip()` e apre lo stream di AudioInputStream per l'audio specificato.
+- `setVolume`: aggiorna il volume globale e applica la modifica a tutti i brani ed effetti sonori. Utilizza `FloatControl.Type.MASTER_GAIN` per regolare il livello di gain delle Clip, calcolando il valore di gain basato sul volume desiderato.
+- `playEffect`, `playSong`, e `loopSong`: gestiscono la riproduzione delle tracce, inclusa l'opzione di loop continuo per la musica di sottofondo.
+- `toggleSongMute` e `toggleEffectMute`: gestiscono il silenziamento.
+
+## 6. PlayerComponent (attributi giocatore)
+
+PlayerComponent tiene traccia delle proprietà specifiche del giocatore, come il numero di gemme raccolte. Si possono aggiungere tutti gli attributi che servono: aggiungiamo il numero di gemme raccolte, per esempio:
+
+```java
 package engine.components;
 
 public class PlayerComponent extends Component {
@@ -112,45 +162,63 @@ public class PlayerComponent extends Component {
         this.gems = gems;
     }
 }
+```
 
+## 7. Aggiunta degli elementi al metodo init() di PlayState
 
-⸻
+Per integrare correttamente le nuove funzionalità interattive e audio, seguiamo questi passaggi dettagliati nel metodo init() della classe PlayState.
 
-6. Implementazione in PlayState (aggiornata)
+1. Inizializzazione AudioManager: Per gestire gli effetti sonori e la musica del gioco, aggiungiamo alla classe PlayState l'attributo AudioManager audio e inizializziamolo all'inizio del metodo init.
 
-Aggiungiamo il componente giocatore al personaggio principale:
+```java
+// Audio
+String[] songNames = { "/music/main_theme.wav" };
+String[] effectNames = { "/sfx/picked_gem.wav" };
+audio = new AudioManager(songNames, effectNames);
+audio.setVolume(1.0f);
+```
 
-PlayerComponent playerComponent = new PlayerComponent(link);
-link.addComponent(playerComponent);
+2. Creazione dell’entità raccoglibile (Gem): Dopo il player, aggiungiamo una nuova entità raccoglibile al gioco, in questo caso una “Gem”, con componenti appropriati per posizione, collisione, grafica e interazione.
 
-Creiamo quindi l’oggetto interattivo generico (Gem):
-
+```java
 // Entity: Gem
-Entity gem = new Entity(2, EntityType.ITEM);
-PositionComponent gemPosition = new PositionComponent(gem, 1550, 1850);
+Entity gem = new Entity(EntityType.ITEM, 2);
+CharacterSpritesheet gemSpritesheet = new CharacterSpritesheet("/objects/gem.sprite");
+MotionComponent gemPosition = new MotionComponent(gem, 1550, 1950, 0.0f);
 gem.addComponent(gemPosition);
 
-Gem gemSpritesheet = new Gem();
-ColliderComponent gemCollider = new ColliderComponent(gem, gemSpritesheet.getBoundingBox());
+ColliderComponent gemCollider = new ColliderComponent(gem, gemSpritesheet.getBoundingBox(),
+        CollisionBehavior.STATIC);
 gem.addComponent(gemCollider);
 
-RenderComponent gemRender = new RenderComponent(gem);
-gem.addComponent(gemRender);
-
-SpriteComponent gemSprite = new SpriteComponent(gem, gemSpritesheet, 5, true);
+SpriteComponent gemSprite = new SpriteComponent(gem, gemSpritesheet, .08f, true);
 gem.addComponent(gemSprite);
 
-InteractionComponent interactionComponent = new InteractionComponent(gem);
-interactionComponent.setOnInteract(() -> {
-    // Incrementa il numero di Gemme e distrugge l’oggetto
-    playerComponent.setGems(playerComponent.getGems() + 1);
-    gem.setAlive(false);
+// Componente di interazione
+InteractionComponent interactableComponent = new InteractionComponent(gem);
+interactableComponent.setOnEntityInteract(other -> {
+    // Logica personalizzata quando il giocatore interagisce con l'entità
+    playerComponent.addGems(1);    // Incrementa il contatore delle gemme raccolte
+    gem.setAlive(false);           // Rimuove la gemma dal gioco
+    audio.playEffect(0);           // Riproduce l'effetto sonoro di raccolta
 });
-gem.addComponent(interactionComponent);
-
+gem.addComponent(interactableComponent);
 add(gem);
+```
 
-Aggiungiamo il sistema di interazione:
+3. Inserimento dell’InteractionSystem: Inseriamo nel gioco il sistema che gestisce dinamicamente le interazioni.
+```java
+add(new InteractionSystem(this.engine));
+```
 
-add(new InteractionSystem(this.engine, link));
+4. Avvio musica di sottofondo: Per rendere l’esperienza più coinvolgente, avviamo il tema musicale di sottofondo in loop alla fine del metodo init.
 
+```java
+audio.loopSong(0);
+```
+
+Sintesi delle modifiche apportate:
+- Aggiunto un sistema audio (AudioManager) per effetti sonori e musica.
+- Creata una nuova entità raccoglibile con logica di interazione specifica.
+- Inserito InteractionSystem per gestire tutte le interazioni fra le entità e con l’ambiente di gioco.
+- Implementata musica di sottofondo che accompagna il gameplay.
