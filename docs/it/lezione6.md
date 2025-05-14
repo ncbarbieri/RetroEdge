@@ -154,13 +154,3 @@ Aggiungiamo il sistema di interazione:
 
 add(new InteractionSystem(this.engine, link));
 
-
-⸻
-
-Conclusione (aggiornata)
-
-Usando un termine generico come “Gem”, abbiamo mantenuto la stessa struttura modulare del gioco, eliminando riferimenti specifici e offrendo una soluzione facilmente riutilizzabile in qualsiasi contesto.
-
-⸻
-
-Se ti serve modificare altro, fammi sapere!
