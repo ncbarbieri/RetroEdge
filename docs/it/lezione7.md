@@ -105,8 +105,6 @@ UIGroup è una sottoclasse concreta di UIElement progettata per raggruppare logi
 3. clearChildren()
    - Rimuove tutti i figli, utile per smontare l’interfaccia o aggiornare dinamicamente il contenuto (es. menu a scelta).
 
-⸻
-
 ### 2.3 Override dei metodi di UIElement
 
 | Metodo	| Funzione |
@@ -135,8 +133,63 @@ Questa struttura è estremamente potente per:
 | Barra superiore HUD	| Un UIGroup ancorato in alto con vita, gemme. |
 | Dialogo con NPC	| Un UIGroup con sfondo, nome, e messaggio. |
 
+## 3.  Label – Etichetta testuale per l’interfaccia utente
 
-## 3. UIComponent – Collegamento tra entità e interfaccia utente
+La classe Label è una specializzazione di UIElement pensata per visualizzare una stringa di testo a schermo. È utilizzata per messaggi statici o dinamici, come:
+- il numero di gemme o vite,
+- dialoghi,
+- titoli di schermate,
+- indicazioni di stato (es. “Game Paused”).
+
+### 3.1 Attributi principali
+
+| Attributo	| Tipo	| Descrizione |
+|-----------|-------|-------------|
+| text	| String	| Il contenuto testuale visualizzato dalla label. |
+| font	| Font	| Il font usato per il rendering. |
+| color	| Color	| Il colore del testo. |
+
+Questi tre parametri sono completamente personalizzabili al momento della creazione o dinamicamente.
+
+### 3.2 Metodi
+
+```java
+public Label(int x, int y, int zIndex, String text, Font font, Color color)
+```
+Descrizione del comportamento del costruttore:
+- Inizializza la posizione, priorità di disegno (zIndex) e proprietà visive.
+- Imposta useCameraOffsets a false per default static UI, evitando che il testo si muova con la telecamera (adatto per HUD, menu, titoli).
+
+```java
+render(Graphics2D g2d, int cameraX, int cameraY)
+```
+Descrizione del comportamento:
+1.	Controllo visibilità: se !isVisible(), il metodo termina subito.
+2.	Impostazione font e colore.
+3.	Calcolo della posizione finale:
+     - Basata su getGlobalX/Y(), quindi supporta la gerarchia.
+     - Applica gli offset della camera solo se richiesto tramite usesCameraOffsets().
+4.	Disegno del testo con drawString().
+
+Questo comportamento rende Label perfettamente compatibile con UIGroup e con sistemi a layout gerarchico.
+
+```java
+update(float deltaTime)
+```
+
+Il metodo è vuoto, perché le Label non necessitano di animazioni o aggiornamenti interni per default. Il metodo resta definito per rispettare le specifiche di UIElement e può essere ridefinito in future estensioni (es. blinking, animazioni di comparsa, ecc.).
+
+```java
+getText()	
+```
+Restituisce il testo attuale.
+
+```java
+setText(String)	
+```
+Modifica il contenuto della label e viene usato per aggiornamenti dinamici del testo (es. punteggio, stato, dialogo).
+
+## 4. UIComponent – Collegamento tra entità e interfaccia utente
 
 UIComponent è un componente ECS che lega un’entità a un elemento dell’interfaccia grafica (UIElement). Consente di:
 - aggiornare l’elemento UI in risposta agli eventi dell’entità,
@@ -147,7 +200,7 @@ Caratteristiche:
 - Contiene un riferimento a un UIElement.
 - Espone getter e setter per manipolare dinamicamente l’elemento UI.
 
-### 3.1 Costruttore
+### 4.1 Costruttore
 
 ```java
 public UIComponent(Entity entity, UIElement uiElement)
@@ -158,7 +211,7 @@ public UIComponent(Entity entity, UIElement uiElement)
 
 L'uso dell’entity consente di mantenere coerenza nel sistema ECS, pur trattandosi di un componente grafico.
 
-### 3.2 Metodi
+### 4.2 Metodi
 
 ```java
 getUIElement() / setUIElement()
@@ -174,7 +227,7 @@ handleInput(KeyInputComponent keyInput)
 
 Questo permette di intercettare input specifici (es. hotkey per aprire un pannello, attivare un elemento visibile solo a certe condizioni).
 
-### 3.3 Relazioni con altri componenti
+### 4.3 Relazioni con altri componenti
 
 | Relazione	| Componente / Classe	| Descrizione |
 |-----------|-----------------------|-------------|
@@ -182,37 +235,61 @@ Questo permette di intercettare input specifici (es. hotkey per aprire un pannel
 | Parte di entità	| Entity	| L’elemento grafico è collegato logicamente a un’entità ECS |
 | Usato da sistema	| UISystem	| Il sistema UI scorre le entità con UIComponent e aggiorna/renderizza i rispettivi elementi |
 
-## 4. UISystem – Sistema ECS per aggiornare la UI
+## 5. UISystem – Sistema ECS per la gestione dell’interfaccia utente
 
-UISystem è un sistema ECS che gestisce l’aggiornamento degli elementi UI collegati a entità tramite UIComponent.
+UISystem è un sottosistema di BaseSystem responsabile dell’aggiornamento e del rendering di tutti gli elementi UI associati a entità tramite UIComponent. Opera esclusivamente in stati del motore in cui l’interfaccia utente deve essere visibile o aggiornata (es. durante il gioco attivo o nelle cutscene).
 
-Caratteristiche:
-- Scorre tutte le entità con UIComponent.
-- Richiama update(deltaTime) sull’elemento UI associato.
+## 5.1 Architettura e Comportamento
 
-Note progettuali
-- Non disegna nulla: il rendering è centralizzato nel metodo render() dell’Engine.
-- Permette agli UIElement di evolvere nel tempo in modo autonomo (ad esempio una barra che si svuota o un’etichetta lampeggiante).
+Attributi principali:
 
-## 5. Label – Etichetta testuale dinamica
+| Campo	| Tipo	| Descrizione |
+|-------|-------|-------------|
+| camera	| Camera	| Riferimento alla camera per ottenere gli offset di rendering. |
+| currentXOffset	| int	| Offset orizzontale della camera (usato per elementi che si muovono col mondo). |
+| currentYOffset	| int	| Offset verticale della camera. |
 
-Label è una sottoclasse concreta di UIElement, pensata per visualizzare testo sullo schermo.
+Gli offset permettono di sincronizzare il rendering degli UIElement che richiedono il follow della telecamera (es. etichette su NPC).
 
-Caratteristiche:
-- Testo dinamico (text): modificabile a runtime.
-- Font e colore: completamente personalizzabili.
-- Metodo setText(String): per aggiornare il contenuto visualizzato.
+### 5.2 Metodi
 
-Note progettuali
-- Utile per punteggi, contatori, notifiche, dialoghi.
-- Supporta l’ereditarietà e la gestione del layer per la corretta visualizzazione.
+Nel costruttore viene impostata la priorità a 11, suggerendo che il sistema UI viene renderizzato dopo il mondo e gli sprite, in primo piano. Nel metodo `initStateUpdateMap()` viene definito in quali stati del motore (EngineState) il sistema deve essere attivo (cioé RUNNING, CUTSCENE, SHOWING_DIALOG).
+
+```java
+update(float deltaTime)
+```
+
+Metodo centrale per l’aggiornamento logico dell’interfaccia.
+
+Fasi principali:
+1.	Accesso sicuro alle entità con UIComponent (tramite engine.accessEntitiesWithComponent).
+2.	Per ciascuna entità:
+     - Se presente KeyInputComponent, inoltra l’input all’elemento UI.
+     - Richiama update(deltaTime) sull’elemento UI associato.
+
+La gestione dell’input è opzionale e deferita all’elemento UI, permettendo il supporto a etichette interattive, menu, bottoni, ecc.
+
+```java
+render(Graphics2D g)
+```
+
+Metodo per il disegno degli elementi UI a schermo.
+
+Fasi principali:
+1.	Calcola gli offset cameraX, cameraY.
+2.	Scorre le entità con UIComponent.
+3.	Se l’elemento UI è visibile (isVisible()):
+     - Chiama render(g, cameraX, cameraY).
+
+L’uso dell’offset consente agli UIElement di decidere se compensare o meno la camera, in base al flag useCameraOffsets.
 
 ## 6. Architettura completa del sistema UI
 | Classe	                  | Ruolo	                                                                 |
 |---------------------------|------------------------------------------------------------------------|
 | UIElement	                | Classe base per qualsiasi elemento visuale UI	                         |
+| UIGroup	                | Classe base per raggruppare logicamente più elementi UI	                         |
 | Label	                    | UIElement specializzato nella visualizzazione di testo	               |
-| UIComponent	              | Componente ECS che collega un’entità a un elemento UI	                 |
+| UIComponent	            | Componente ECS che collega un’entità a un elemento UI	                 |
 | UISystem	                | Sistema ECS che aggiorna ogni elemento UI collegato a entità	         |
 
 
