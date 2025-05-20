@@ -68,7 +68,7 @@ Note progettuali
 
 Vogliamo mostrare in alto a sinistra lo stato delle gemme raccolte dal giocatore. Procediamo in questo modo:
 
-1. Aggiunta del font nel metodo init() del PlayState
+1. Aggiungiamo il font nel metodo init() del PlayState
 ```java
 Font font;
 try {
@@ -83,13 +83,13 @@ GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 ge.registerFont(font);
 ```
 
-2. Creazione dell’etichetta
+2. Istanziamo l’etichetta
 ```java
 Label gemLabel = new Label(25, 40, 1, "Gems: 0", font, Color.white);
 gemLabel.show();
 ```
 
-3. Collegamento a un’entità con UIComponent
+3. Colleghiamo l'etichetta a un’entità con UIComponent
 ```java
 Entity uiPlayer = new Entity(EntityType.UI, 6);
 UIComponent pComponent = new UIComponent(uiPlayer, gemLabel);
@@ -97,7 +97,7 @@ uiPlayer.addComponent(pComponent);
 add(uiPlayer);
 ```
 
-4. Quando il giocatore raccoglie una gemma, modifichiamo il testo della label
+4. Quando il giocatore raccoglie una gemma, modifichiamo il testo della label modificando il codice dell'InteractionComponent
 ```java
 gemLabel.setText("Gems: " + playerComponent.getGems());
 ```
