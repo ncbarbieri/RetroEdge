@@ -4,19 +4,80 @@ L’interfaccia utente (UI) è la componente visiva che permette al giocatore di
 
 ## 1. UIElement – Elemento UI base
 
-UIElement è una classe astratta che rappresenta qualsiasi oggetto dell’interfaccia utente (es. etichette, barre, icone). Serve come superclasse per tutti gli elementi visivi UI.
+La classe UIElement funge da classe base astratta per tutti gli elementi dell’interfaccia utente. È progettata per supportare:
+- una gerarchia strutturata di elementi UI (es. pannello contenente etichette e pulsanti),
+- coordinate locali e globali,
+- gestione opzionale della camera (utile per HUD e UI fissa),
+- z-index per la profondità di rendering,
+- input da tastiera e mouse,
+- visibilità dinamica.
 
-Caratteristiche:
-- Posizione (x, y): coordinate sullo schermo, in pixel.
-- Layer (int): stabilisce la priorità di rendering (elementi con layer maggiore sono disegnati sopra).
-- Visibilità (visible): abilita/disabilita il disegno senza rimuovere l’elemento.
-- Metodi astratti:
-   - update(float deltaTime): per animazioni o logica temporale.
-   - render(Graphics2D g2d): per disegnare l’elemento a schermo.
+### 1.1 Coordinate e Posizionamento
 
-Note progettuali
-- Gli UIElement non sono entità, ma possono essere aggiornati tramite entità che li referenziano.
-- Il layer consente una gestione sofisticata della sovrapposizione visiva.
+| Metodo	| Descrizione |
+|--------|-------------|
+| getLocalX()/getLocalY()	| Coordinate relative al genitore. |
+| getGlobalX()/getGlobalY()	| Coordinate assolute ottenute ricorsivamente sommando le posizioni di tutti i genitori. |
+| setX()/setY()	| Imposta la posizione locale. |
+
+Nota: questo approccio è simile al layout ad albero (composite pattern), usato nei moderni sistemi UI (es. JavaFX, Unity UI, DOM HTML).
+
+### 1.2 Gerarchia
+
+| Metodo	| Descrizione |
+|--------|-------------|
+| setParent(UIElement)	| Imposta il genitore. |
+| getParent()	| Restituisce il genitore. |
+
+Uso tipico: consente la composizione di UI complessa, dove un pannello può contenere più elementi figli, e i movimenti del genitore si propagano automaticamente ai figli tramite getGlobalX/Y().
+
+
+### 1.3 Visibilità
+
+| Metodo	| Descrizione |
+|--------|-------------|
+| isVisible()	| Ritorna true se l’elemento è visibile. |
+| show()/hide()	| Mostra o nasconde l’elemento. |
+
+Utile per mostrare/nascondere temporaneamente menu, popup, ecc.
+
+### 1.4 Profondità: zIndex
+
+| Metodo	| Descrizione |
+|--------|-------------|
+| getZIndex()	| Priorità di disegno. |
+| setZIndex(int)	| Modifica la priorità. |
+
+Gli elementi UI con zIndex maggiore sono disegnati sopra a quelli con zIndex inferiore. È cruciale per gestire l’ordine visivo (es. finestre sovrapposte).
+
+### 1.5 Integrazione con la camera
+
+| Metodo	| Descrizione |
+|--------|-------------|
+| usesCameraOffsets()	| Indica se le coordinate devono tener conto della camera. |
+| setUseCameraOffsets()	| Abilita/disabilita questa modalità. |
+
+Utile per distinguere:
+- **UI fissa**: elementi HUD che non si muovono con il mondo (useCameraOffsets = false)
+- **UI ancorata al mondo**: etichette su NPC o oggetti (useCameraOffsets = true)
+
+### 1.6 Gestione dell’input
+
+| Metodo	| Descrizione |
+|--------|-------------|
+| handleInput(KeyInputComponent)	| Override opzionale per gestire input da tastiera. |
+| handleMouseInput(MouseInputHandler)	| Override opzionale per gestire input da mouse. |
+
+Questi metodi sono vuoti per default, ma possono essere ridefiniti nelle sottoclassi per implementare UI interattiva (es. bottoni cliccabili, hotkey, menu navigabili).
+
+### 1.7 Metodi astratti da implementare
+
+| Metodo	| Descrizione |
+|--------|-------------|
+| update(float deltaTime)	| Aggiorna lo stato dell’elemento (animazioni, timer, input ecc.) |
+| render(Graphics2D g, int cameraX, int cameraY)	| Disegna l’elemento, tenendo conto eventualmente della camera. |
+
+L’interfaccia render prevede parametri cameraX e cameraY per decidere dinamicamente se compensare con l’offset della camera.
 
 ## 2. UIComponent – Collegamento tra entità e UI
 
