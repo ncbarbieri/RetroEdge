@@ -168,8 +168,11 @@ public class PlayerComponent extends Component {
 
 Per integrare correttamente le nuove funzionalità interattive e audio, seguiamo questi passaggi dettagliati nel metodo init() della classe PlayState.
 
-1. Inizializzazione AudioManager: Per gestire gli effetti sonori e la musica del gioco, aggiungiamo alla classe PlayState l'attributo AudioManager audio e inizializziamolo all'inizio del metodo init.
-
+1. **Inizializzazione AudioManager**: Per gestire gli effetti sonori e la musica del gioco, aggiungiamo alla classe PlayState l'attributo AudioManager audio.
+```java
+private AudioManager audio;
+```
+2. **Creazione dell'istanza di AudioManager**: inizializziamo poi l'attributo creato precedentemente all'inizio del metodo init.
 ```java
 // Audio
 String[] songNames = { "/music/main_theme.wav" };
@@ -177,8 +180,13 @@ String[] effectNames = { "/sfx/picked_gem.wav" };
 audio = new AudioManager(songNames, effectNames);
 audio.setVolume(1.0f);
 ```
+3. **Aggiunta del PlayerComponent all'entity Player**: aggiungiamo all'entity Player il componente per salvare il numero di gemme.
+```java
+PlayerComponent playerComponent = new PlayerComponent(player);
+player.addComponent(playerComponent);
+```
 
-2. Creazione dell’entità raccoglibile (Gem): Dopo il player, aggiungiamo una nuova entità raccoglibile al gioco, in questo caso una “Gem”, con componenti appropriati per posizione, collisione, grafica e interazione.
+4. **Creazione dell’entità raccoglibile (Gem)**: Dopo il player, aggiungiamo una nuova entità raccoglibile al gioco, in questo caso una “Gem”, con componenti appropriati per posizione, collisione, grafica e interazione.
 
 ```java
 // Entity: Gem
@@ -206,12 +214,12 @@ gem.addComponent(interactableComponent);
 add(gem);
 ```
 
-3. Inserimento dell’InteractionSystem: Inseriamo nel gioco il sistema che gestisce dinamicamente le interazioni.
+5. **Inserimento dell’InteractionSystem**: Inseriamo nel gioco il sistema che gestisce dinamicamente le interazioni.
 ```java
 add(new InteractionSystem(this.engine));
 ```
 
-4. Avvio musica di sottofondo: Per rendere l’esperienza più coinvolgente, avviamo il tema musicale di sottofondo in loop alla fine del metodo init.
+6. **Avvio musica di sottofondo**: Per rendere l’esperienza più coinvolgente, avviamo il tema musicale di sottofondo in loop alla fine del metodo init.
 
 ```java
 audio.loopSong(0);
