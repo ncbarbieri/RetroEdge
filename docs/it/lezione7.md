@@ -78,22 +78,31 @@ try {
 } catch (Exception e) {
     font = new Font("Arial", Font.PLAIN, 24);
 }
+// Register the font
+GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+ge.registerFont(font);
 ```
 
 2. Creazione dell’etichetta
 ```java
-Label gemLabel = new Label(25, 40, "Gems: 0", font, Color.WHITE);
-add(gemLabel); // metodo definito in GameState
+Label gemLabel = new Label(25, 40, 1, "Gems: 0", font, Color.white);
+gemLabel.show();
 ```
 
 3. Collegamento a un’entità con UIComponent
 ```java
-Entity labelEntity = new Entity(EntityType.UI, 999);
-labelEntity.addComponent(new UIComponent(gemLabel));
-engine.addEntity(labelEntity);
+Entity uiPlayer = new Entity(EntityType.UI, 6);
+UIComponent pComponent = new UIComponent(uiPlayer, gemLabel);
+uiPlayer.addComponent(pComponent);
+add(uiPlayer);
 ```
 
 4. Quando il giocatore raccoglie una gemma, modifichiamo il testo della label
 ```java
 gemLabel.setText("Gems: " + playerComponent.getGems());
+```
+
+5. Aggiungiamo il sistema per l'aggiornamento dell'interfaccia utente
+```java
+add(new UISystem(this.engine, camera));
 ```
