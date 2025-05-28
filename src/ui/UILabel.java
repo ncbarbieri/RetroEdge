@@ -4,12 +4,12 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 
-public class Label extends UIElement {
+public class UILabel extends UIElement {
     private String text;
     private Font font;
     private Color color;
 
-    public Label(int x, int y, int zIndex, String text, Font font, Color color) {
+    public UILabel(int x, int y, int zIndex, String text, Font font, Color color) {
         super(x, y, zIndex);
         this.text = text;
         this.font = font;
