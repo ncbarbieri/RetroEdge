@@ -9,10 +9,10 @@ public abstract class UIElement {
     protected int x;
     protected int y;
     protected boolean visible;
-    private int zIndex;
+    protected int zIndex;
     
     // Indicates if this element should be offset by camera/view transformations.
-    private boolean useCameraOffsets;
+    protected boolean useCameraOffsets;
 
     public UIElement(int x, int y, int zIndex) {
         this.x = x;

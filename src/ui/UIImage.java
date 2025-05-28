@@ -52,6 +52,20 @@ public class UIImage extends UIElement {
         this.moving = false;
     }
 
+    public UIImage(int x, int y, int zIndex, BufferedImage image) {
+        super(x, y, zIndex);
+        this.images = new BufferedImage[] { image };
+        this.looping = false;
+        this.animating = false;
+        this.moving = false;
+    }
+
+    public void setImage(BufferedImage image) {
+        this.images = new BufferedImage[] { image };
+        this.currentFrame = 0;
+        this.animating = false;
+    }
+
     public void setDestination(int endX, int endY, float speed) {
         float dx = endX - getLocalX();
         float dy = endY - getLocalY();
@@ -126,8 +140,12 @@ public class UIImage extends UIElement {
     @Override
     public void render(Graphics2D g, int xOffset, int yOffset) {
         if (isVisible() && images != null && images[currentFrame] != null) {
-            int drawX = getGlobalX() - xOffset;
-            int drawY = getGlobalY() - yOffset;
+            int drawX = getGlobalX() ;
+            int drawY = getGlobalY() ;
+            if (this.useCameraOffsets) {
+            	drawX -= xOffset;
+            	drawY -= yOffset;
+            }
             g.drawImage(images[currentFrame], drawX, drawY, null);
         }
     }
