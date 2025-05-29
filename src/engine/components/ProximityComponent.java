@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import engine.Component;
 import engine.Entity;
-import ui.elements.NotificationElement;
+import ui.elements.UINotification;
 
 public class ProximityComponent extends Component {
 
@@ -20,7 +20,7 @@ public class ProximityComponent extends Component {
     private boolean isTriggered;
     private Set<Entity> triggeringEntities; // Entities currently triggering proximity
     private float interactionRange;
-    private NotificationElement notificationElement;
+    private UINotification notificationElement;
 
     public ProximityComponent(Entity entity, float interactionRange) {
         super(entity);
@@ -110,11 +110,11 @@ public class ProximityComponent extends Component {
         this.interactionRange = interactionRange;
     }
 
-    public void setNotificationElement(NotificationElement element) {
+    public void setNotificationElement(UINotification element) {
         this.notificationElement = element;
     }
 
-    public NotificationElement getNotificationElement() {
+    public UINotification getNotificationElement() {
         return notificationElement;
     }
 }
