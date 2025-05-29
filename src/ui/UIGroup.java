@@ -7,7 +7,7 @@ import java.util.List;
 import engine.components.KeyInputComponent;
 import input.MouseInputHandler;
 
-public class UIGroup extends UIElement {
+public abstract class UIGroup extends UIElement {
     private final List<UIElement> children;
 
     public UIGroup(int x, int y, int zIndex) {
