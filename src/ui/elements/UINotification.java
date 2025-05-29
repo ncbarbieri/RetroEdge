@@ -7,7 +7,7 @@ import ui.UIElement;
 import ui.UISpritesheet;
 import engine.Entity;
 
-public class NotificationElement extends UIElement {
+public class UINotification extends UIElement {
     private BufferedImage[] frames;
     private int currentFrame;
     private float frameDuration;
@@ -15,7 +15,7 @@ public class NotificationElement extends UIElement {
     private Entity trackedEntity;
     private int offsetX, offsetY;
 
-    public NotificationElement(int offsetX, int offsetY, int zIndex, Entity entity, UISpritesheet spritesheet, float frameDuration) {
+    public UINotification(int offsetX, int offsetY, int zIndex, Entity entity, UISpritesheet spritesheet, float frameDuration) {
         super(0, 0, zIndex);
         this.frames = spritesheet.getImages();
         this.trackedEntity = entity;
