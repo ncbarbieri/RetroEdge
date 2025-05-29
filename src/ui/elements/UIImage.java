@@ -5,13 +5,16 @@
  * Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en
  */
-package ui;
+package ui.elements;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
+
+import ui.UIElement;
+import ui.UISpritesheet;
 
 public class UIImage extends UIElement {
     private BufferedImage[] images;

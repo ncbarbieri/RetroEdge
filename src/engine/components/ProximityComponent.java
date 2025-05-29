@@ -10,10 +10,9 @@ package engine.components;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
-
 import engine.Component;
 import engine.Entity;
-import ui.NotificationElement;
+import ui.elements.NotificationElement;
 
 public class ProximityComponent extends Component {
 

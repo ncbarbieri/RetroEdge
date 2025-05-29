@@ -1,8 +1,10 @@
-package ui;
+package ui.elements;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import engine.components.MotionComponent;
+import ui.UIElement;
+import ui.UISpritesheet;
 import engine.Entity;
 
 public class NotificationElement extends UIElement {

@@ -1,8 +1,10 @@
-package ui;
+package ui.elements;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+
+import ui.UIElement;
 
 public class UILabel extends UIElement {
     private String text;
