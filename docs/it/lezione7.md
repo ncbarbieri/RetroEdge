@@ -314,7 +314,7 @@ ge.registerFont(font);
 
 2. Istanziamo l’etichetta
 ```java
-UILabel gemLabel = new Label(25, 40, 1, "Gems: 0", font, Color.white);
+UILabel gemLabel = new UILabel(25, 40, 1, "Gems: 0", font, Color.white);
 gemLabel.show();
 ```
 
