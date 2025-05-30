@@ -288,7 +288,7 @@ L’uso dell’offset consente agli UIElement di decidere se compensare o meno l
 |---------------------------|------------------------------------------------------------------------|
 | UIElement	                | Classe base per qualsiasi elemento visuale UI	                         |
 | UIGroup	                | Classe base per raggruppare logicamente più elementi UI	                         |
-| Label	                    | UIElement specializzato nella visualizzazione di testo	               |
+| UILabel	                    | UIElement specializzato nella visualizzazione di testo	               |
 | UIComponent	            | Componente ECS che collega un’entità a un elemento UI	                 |
 | UISystem	                | Sistema ECS che aggiorna ogni elemento UI collegato a entità	         |
 
@@ -301,12 +301,12 @@ Vogliamo mostrare in alto a sinistra lo stato delle gemme raccolte dal giocatore
 ```java
 Font font;
 try {
-    font = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/fonts/myFont.otf"));
-    font = font.deriveFont(24f);
-    GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
+    font = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/fonts/HyliaSerifBeta-Regular.otf"));
 } catch (Exception e) {
-    font = new Font("Arial", Font.PLAIN, 24);
+	font = new Font("Arial", Font.PLAIN, 40);
 }
+font = font.deriveFont(24f); // Set font size
+
 // Register the font
 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 ge.registerFont(font);
