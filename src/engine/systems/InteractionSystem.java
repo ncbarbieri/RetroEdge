@@ -19,7 +19,7 @@ import engine.Entity;
 import enums.EngineState;
 import input.ActionStateManager;
 import pathfinder.Node;
-import ui.DialogueElement;
+import ui.UIDialogue;
 import java.util.Set;
 
 public class InteractionSystem extends BaseSystem {
@@ -134,7 +134,7 @@ public class InteractionSystem extends BaseSystem {
      */
     private void handleDialogue(DialogueComponent dialogue, Entity entityA, Entity entityB) {
         // Get the DialogueElement from the DialogueComponent
-        DialogueElement dialogueElement = dialogue.getDialogueElement();
+        UIDialogue dialogueElement = dialogue.getDialogueElement();
         if (dialogueElement == null) {
             return; // No DialogueElement available
         }
@@ -151,7 +151,7 @@ public class InteractionSystem extends BaseSystem {
         }
 
         // Start or continue the dialogue
-        if (dialogueElement.getState() == DialogueElement.DialogueState.FINISHED) {
+        if (dialogueElement.getState() == UIDialogue.DialogueState.FINISHED) {
             ActionStateManager.consumeAction("DIALOG");
             dialogueElement.startDialogue();
         }

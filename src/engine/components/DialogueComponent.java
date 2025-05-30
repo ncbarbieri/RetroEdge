@@ -9,13 +9,13 @@ package engine.components;
 
 import engine.Component;
 import engine.Entity;
-import ui.DialogueElement;
+import ui.UIDialogue;
 
 public class DialogueComponent extends Component {
-    private DialogueElement dialogueElement; // Elemento UI per il dialogo
+    private UIDialogue dialogueElement; // Elemento UI per il dialogo
     private KeyInputComponent keyInput;
 
-    public DialogueComponent(Entity entity, DialogueElement dialogueElement, KeyInputComponent keyInput) {
+    public DialogueComponent(Entity entity, UIDialogue dialogueElement, KeyInputComponent keyInput) {
         super(entity);
         this.dialogueElement = dialogueElement;
         this.keyInput = keyInput;
@@ -25,7 +25,7 @@ public class DialogueComponent extends Component {
         return keyInput;
     }
 
-    public DialogueElement getDialogueElement() {
+    public UIDialogue getDialogueElement() {
         return dialogueElement;
     }
 

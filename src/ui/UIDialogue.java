@@ -3,7 +3,7 @@ package ui;
 import java.awt.Graphics2D;
 import engine.components.KeyInputComponent;
 
-public abstract class DialogueElement extends UIElement {
+public abstract class UIDialogue extends UIElement {
 
 	public enum DialogueState {
         ACTIVE,     // Dialogo in corso
@@ -13,7 +13,7 @@ public abstract class DialogueElement extends UIElement {
     protected DialogueState state;
     protected boolean triggered;
 
-    public DialogueElement(int x, int y, int layer) {
+    public UIDialogue(int x, int y, int layer) {
         super(x, y, layer);
         this.state = DialogueState.FINISHED; // Stato iniziale
     }
