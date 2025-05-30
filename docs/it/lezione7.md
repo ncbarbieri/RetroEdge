@@ -133,7 +133,7 @@ Questa struttura è estremamente potente per:
 | Barra superiore HUD	| Un UIGroup ancorato in alto con vita, gemme. |
 | Dialogo con NPC	| Un UIGroup con sfondo, nome, e messaggio. |
 
-## 3.  Label – Etichetta testuale per l’interfaccia utente
+## 3.  UILabel – Etichetta testuale per l’interfaccia utente
 
 La classe Label è una specializzazione di UIElement pensata per visualizzare una stringa di testo a schermo. È utilizzata per messaggi statici o dinamici, come:
 - il numero di gemme o vite,
@@ -154,7 +154,7 @@ Questi tre parametri sono completamente personalizzabili al momento della creazi
 ### 3.2 Metodi
 
 ```java
-public Label(int x, int y, int zIndex, String text, Font font, Color color)
+public UILabel(int x, int y, int zIndex, String text, Font font, Color color)
 ```
 Descrizione del comportamento del costruttore:
 - Inizializza la posizione, priorità di disegno (zIndex) e proprietà visive.
@@ -314,7 +314,7 @@ ge.registerFont(font);
 
 2. Istanziamo l’etichetta
 ```java
-Label gemLabel = new Label(25, 40, 1, "Gems: 0", font, Color.white);
+UILabel gemLabel = new Label(25, 40, 1, "Gems: 0", font, Color.white);
 gemLabel.show();
 ```
 
