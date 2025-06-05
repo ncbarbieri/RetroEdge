@@ -9,21 +9,88 @@ In questa lezione aggiungeremo al nostro gioco un personaggio non giocante (NPC 
 
 ## 1. NPCComponent
 
+NPCComponent consente a un’entità di tipo NPC di:
+- muoversi autonomamente verso una posizione target
+- calcolare la direzione e la velocità da applicare
+- eseguire del codice personalizzato quando ha raggiunto la destinazione
+
+È un componente passivo, ovvero non aggiorna da solo la posizione, ma lavora in sinergia con il MotionSystem.
+
+### 1.1 Attributi principali
+
+| Campo	| Tipo	| Descrizione |
+|-------|-------|-------------|
+| targetX, targetY	| float	| Coordinate verso cui si sta muovendo l’NPC |
+| xSpeed, ySpeed	| float	| Velocità da applicare lungo X e Y |
+| onTargetReached	| Runnable	| Callback da eseguire quando il target è raggiunto |
+
+### 1.2 Costruttore
+
+```java
+public NPCComponent(Entity entity, float targetX, float targetY)
+```
+
+- Inizializza il componente con una destinazione.
+- Calcola subito la direzione del movimento con setTargetPosition.
+
+### 1.3 Metodo ``` public void setTargetPosition(float, float) ```
+
+Questo metodo è il cuore del componente. Esegue i seguenti passi:
+1.	Memorizza la destinazione (targetX, targetY).
+2.	Imposta le velocità xSpeed e ySpeed in modo da puntare esattamente verso la meta.
+3.	Per fare questo, calcola:
+     - il vettore direzione dalla posizione attuale
+     - la norma (modulo) del vettore
+     - le componenti normalizzate moltiplicate per la maxSpeed definita nel MotionComponent
+
+Esempio di calcolo:
+
+```java
+float dx = targetX - pc.getX();
+float dy = targetY - pc.getY();
+float mod = sqrt(dx*dx + dy*dy);
+xSpeed = dx / mod * movementSpeed;
+ySpeed = dy / mod * movementSpeed;
+```
+
+Questo approccio garantisce un movimento lineare costante verso la destinazione, indipendente dalla distanza.
+
+### 1.4 Metodo ``` public void onTargetReached() ```
+
+Questo metodo serve a eseguire il codice personalizzato quando il target viene raggiunto. Se è stato registrato un Runnable tramite il metodo ```setOnTargetReached(Runnable onTargetReached)```, viene eseguito:
+
+```java
+if (onTargetReached != null) {
+    onTargetReached.run();
+}
+```
+
+Il codice personalizzato è usato tipicamente per:
+- impostare una nuova destinazione (es. NPC che va avanti e indietro)
+- attivare un’animazione o una reazione dell’NPC
+- terminare il movimento
+
+### 1.5 Utilizzo con il MotionSystem
+
 Nel nostro motore di gioco, il movimento delle entità è gestito tramite due elementi principali:
 1. MotionComponent: tiene traccia della posizione e della velocità di un’entità.
 2. MotionSystem: aggiorna la posizione delle entità in base al tempo trascorso (delta time) e alla loro velocità.
 
-Mentre il player viene mosso grazie a KeyInputComponent, abbiamo bisogno di un nuovo componente per guidare gli spostamenti di un NPC. Introduciamo quindi NPCComponent, un componente che permette di assegnare a un NPC una destinazione, calcolare la direzione da seguire e aggiornare la velocità di conseguenza.
+La classe MotionSystem scorre tutte le entità dotate di MotionComponent e aggiorna la loro posizione nel mondo. Mentre il player viene mosso grazie a KeyInputComponent, NPCComponent permette di assegnare a un NPC una destinazione, calcolare la direzione da seguire e aggiornare la velocità di conseguenza. Se l’entità ha un componente NPCComponent, il MotionSystem richiama getXSpeed() e getYSpeed() per aggiornare la velocità del MotionComponent dell’NPC.
 
-Il NPCComponent estende il comportamento del MotionComponent con l’aggiunta di:
-- coordinate di destinazione (targetX, targetY)
-- funzione setTargetPosition per cambiare destinazione
-- funzione updateVelocity per calcolare la direzione del movimento
-- callback onTargetReached per definire un comportamento al raggiungimento della destinazione
+Quando l’NPC è vicino abbastanza alla destinazione (entro un certo margine), il sistema:
+- imposta le velocità a zero
+- chiama onTargetReached()
 
-Quando la distanza residua è piccola (sotto una soglia), l’NPC si ferma e viene eseguito il codice associato al callback.
+Questo comportamento è totalmente automatizzato e consente la creazione di NPC reattivi e scriptabili, ad esempio:
 
-La classe MotionSystem scorre tutte le entità dotate di MotionComponent e aggiorna la loro posizione nel mondo. Se l’entità ha un componente NPCComponent, la velocità viene calcolata in base alla direzione verso la destinazione. Quando l’NPC raggiunge la destinazione, viene notificato il callback definito tramite setOnTargetReached. Con queste due classi, il sistema è in grado di gestire NPC che si spostano autonomamente tra più punti, aggiornando la direzione e la velocità in tempo reale, e reagendo al raggiungimento di ciascun obiettivo.
+```java
+npcComponent.setOnTargetReached(() -> {
+    // Cambio direzione
+    npcComponent.setTargetPosition(newX, newY);
+});
+```
+
 
 ## 2. ProximityComponent: rilevamento della vicinanza
 
