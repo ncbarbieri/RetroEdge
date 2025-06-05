@@ -33,7 +33,7 @@ public NPCComponent(Entity entity, float targetX, float targetY)
 - Inizializza il componente con una destinazione.
 - Calcola subito la direzione del movimento con setTargetPosition.
 
-### 1.3 Metodo ``` public void setTargetPosition(float, float) ```
+### 1.3 Metodo ```void setTargetPosition(float, float)```
 
 Questo metodo è il cuore del componente. Esegue i seguenti passi:
 1.	Memorizza la destinazione (targetX, targetY).
@@ -55,7 +55,7 @@ ySpeed = dy / mod * movementSpeed;
 
 Questo approccio garantisce un movimento lineare costante verso la destinazione, indipendente dalla distanza.
 
-### 1.4 Metodo ``` public void onTargetReached() ```
+### 1.4 Metodo ```void onTargetReached()```
 
 Questo metodo serve a eseguire il codice personalizzato quando il target viene raggiunto. Se è stato registrato un Runnable tramite il metodo ```setOnTargetReached(Runnable onTargetReached)```, viene eseguito:
 
@@ -94,11 +94,11 @@ npcComponent.setOnTargetReached(() -> {
 
 ## 2. ProximityComponent: rilevamento della vicinanza
 
-Il ProximityComponent consente a un’entità (tipicamente un NPC) di rilevare la vicinanza di altre entità (es. il giocatore) entro un determinato raggio di interazione. Quando la vicinanza viene rilevata, può:
+Il ProximityComponent contiene i dati per consentire a un’entità (tipicamente un NPC) di rilevare la vicinanza di altre entità (es. il giocatore) entro un determinato raggio di interazione. Quando la vicinanza viene rilevata, è possibile:
 - attivare uno stato interno
 - visualizzare un elemento grafico di notifica (es. un fumetto)
 
-## 2.1 Attributi principali
+### 2.1 Attributi principali
 
 | Campo	| Tipo	| Descrizione |
 |-------|-------|-------------|
@@ -141,4 +141,58 @@ Il ProximityComponent consente a un’entità (tipicamente un NPC) di rilevare l
 
   Valuta se una certa entità può attivare la prossimità secondo il filtro. Se non è definito alcun filtro (null), qualsiasi entità è valida.
 
+- ```public void setNotificationElement(UINotification element)```
+
+  Imposta l'elemento di notifica che verrà visualizzato quando la prossimità viene rilevata.
+
+## 3. UINotification
+
+UINotification è un elemento grafico dell’interfaccia utente che segue un’entità del mondo di gioco (di solito un NPC) e mostra un’animazione ciclica — come un fumetto o un simbolo — quando l’entità è interagibile (es. tramite ProximityComponent).
+
+È usata per guidare visivamente il giocatore, suggerendogli che può attivare un dialogo o altra interazione.
+
+### 3.1 Attributi principali
+
+| Campo	| Tipo	| Descrizione |
+|---------|---------|-------------|
+| frames	| BufferedImage[]	| Sequenza di immagini da animare. |
+| currentFrame	| int	| Indice del frame attualmente visibile. |
+| frameDuration	| float	| Durata di ogni frame in secondi. |
+| elapsedTime	| float	| Tempo accumulato da quando è stato mostrato l’ultimo frame. |
+| trackedEntity	| Entity	| Entità a cui la notifica è ancorata. |
+| offsetX/Y	| int	| Spostamento rispetto alla posizione dell’entità (es. per posizionarla sopra la testa). |
+
+### 3.2 Costruttore
+
+```public UINotification(int offsetX, int offsetY, int zIndex, Entity entity, UISpritesheet spritesheet, float frameDuration)```
+
+Imposta:
+- la posizione relativa all’entità (offsetX/Y)
+- l’entità da seguire (trackedEntity)
+- lo zIndex per il disegno in primo piano
+- i frame dell'animazione (caricati da uno UISpritesheet)
+- la velocità dell’animazione (frameDuration)
+
+Attiva anche l’uso degli offset della camera: ```setUseCameraOffsets(true);```
+
+### 3.2 Metodo ```update(float deltaTime)```
+
+Aggiorna il frame corrente dell’animazione in base al tempo trascorso. L’animazione cicla in automatico ogni periodo di tempo pari a frameDuration secondi:
+
+```java
+if (elapsedTime >= frameDuration) {
+    currentFrame = (currentFrame + 1) % frames.length;
+}
+```
+
+### 3.3 Metodo ```render(Graphics2D g, int cameraX, int cameraY)```
+
+Disegna il frame corrente sopra l’entità trackedEntity. Il disegno tiene conto di:
+- la posizione assoluta nel mondo (MotionComponent)
+- l’offset della camera
+- l’offset relativo all'entità tracciata specificato nel costruttore (es. 36 px a destra e -8 px in alto)
+
+### 3.4 Metodo resetAnimation()
+
+Serve per resettare l’animazione alla prima immagine, utile quando l’elemento viene nascosto e poi mostrato di nuovo. Tipicamente chiamato da ProximityComponent.setTriggered(false) per azzerare l’effetto visivo quando il giocatore si allontana.
 
