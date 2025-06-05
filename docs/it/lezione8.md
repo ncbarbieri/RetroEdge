@@ -194,5 +194,5 @@ Disegna il frame corrente sopra l’entità trackedEntity. Il disegno tiene cont
 
 ### 3.4 Metodo ```resetAnimation()```
 
-Serve per resettare l’animazione alla prima immagine, utile quando l’elemento viene nascosto e poi mostrato di nuovo. Tipicamente chiamato da ProximityComponent.setTriggered(false) per azzerare l’effetto visivo quando il giocatore si allontana.
+Serve per resettare l’animazione alla prima immagine, utile quando l’elemento viene nascosto e poi mostrato di nuovo. Tipicamente chiamato da ```ProximityComponent.setTriggered(false)``` per azzerare l’effetto visivo quando il giocatore si allontana.
 
