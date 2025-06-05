@@ -147,7 +147,7 @@ Il ProximityComponent contiene i dati per consentire a un’entità (tipicamente
 
 ## 3. UINotification
 
-UINotification è un elemento grafico dell’interfaccia utente che segue un’entità del mondo di gioco (di solito un NPC) e mostra un’animazione ciclica — come un fumetto o un simbolo — quando l’entità è interagibile (es. tramite ProximityComponent).
+UINotification è una classe che estende UIElement, e che rappresenta un elemento grafico dell’interfaccia utente che segue un’entità (di solito un NPC) e mostra un’animazione ciclica (per esempio un fumetto) quando l’entità è interagibile (es. tramite ProximityComponent).
 
 È usata per guidare visivamente il giocatore, suggerendogli che può attivare un dialogo o altra interazione.
 
@@ -242,7 +242,7 @@ Il DialogueComponent non gestisce direttamente la logica del dialogo, ma attiva 
 
 ## 5. UIDialogue
 
-UIDialogue è una classe astratta che fornisce un’interfaccia e una logica di base per la gestione di interfacce di dialogo UI.
+UIDialogue è una classe astratta che estende UIElement e che fornisce un’interfaccia e una logica di base per la gestione di interfacce di dialogo UI.
 Definisce le regole generali su:
 - ciclo di vita del dialogo
 - stato (attivo / terminato)
@@ -290,4 +290,64 @@ Le sottoclassi devono implementare i seguenti metodi:
 ### 5.4 Gestione dello stato
 
 Il metodo protetto ```setState(DialogueState newState)``` consente di cambiare lo stato del dialogo. Se lo stato diventa FINISHED viene chiamato il metodo onDialogueFinished(), che può essere sovrascritto nelle sottoclassi per notificare la fine del dialogo al resto del sistema.
+
+## 6. UIRotatingDialogue
+
+UIRotatingDialogue è una classe che estende UIDialogue e rappresenta un’interfaccia grafica di dialogo pensata per:
+- visualizzare un insieme di frasi pre-renderizzate una alla volta
+- impaginarle su una finestra di dialogo grafica
+- gestire il flusso del dialogo tramite input da tastiera
+- coordinarsi con lo stato dell’engine (es. bloccare il gioco mentre il dialogo è attivo)
+
+È l’implementazione visiva principale utilizzata per dialoghi statici e scene narrative nel gioco.
+
+### 6.1 Attributi principali
+
+| Campo	| Tipo	| Descrizione |
+|---------|---------|-------------|
+| dialogueImages	| BufferedImage[]	| Le frasi del dialogo già renderizzate come immagini. |
+| currentMessageIndex	| int	| Indice della frase attualmente mostrata. |
+| panel	| BufferedImage	| L’immagine di sfondo della finestra di dialogo. |
+| textFont	| Font	| Font usato per disegnare il testo. |
+| textColor	| Color	| Colore del testo. |
+| backgroundColor	| Color	| Colore dello sfondo (sotto il pannello PNG). |
+| stateManager	| EngineStateManager	| Permette di gestire lo stato del gioco durante il dialogo. |
+| fontMetrics	| FontMetrics	| Misure tipografiche per impaginare correttamente il testo. |
+
+### 6.2 Costruttore
+
+```UIRotatingDialogue(..., String frameFile)```
+
+- Carica lo sfondo grafico da un file (frameFile).
+- Calcola posizione e dimensioni del pannello in base alla risoluzione (GamePanel.GAME_WIDTH/HEIGHT).
+- Inizializza il font e le metriche per calcolare l’impaginazione delle frasi.
+
+### 6.3 Metodi
+
+```setDialogues(List<String> dialogues)```
+- Converte ogni stringa in una immagine bitmap pre-renderizzata (BufferedImage) tramite il metodo renderTextToImage().
+- Supporta \\n per la gestione di frasi su più righe.
+- Memorizza tutto in un array di immagini che verranno mostrate una alla volta.
+
+```renderDialogue(Graphics2D g, ...)```
+- Disegna il rettangolo colorato di sfondo, l’immagine del pannello e la frase attuale.
+- Usa gli offset per adattarsi alla posizione della camera se necessario.
+
+```handleInput(KeyInputComponent keyInput)```
+- Aspetta che il giocatore prema un tasto associato all’azione "DIALOG" (es. INVIO, Z, ecc.).
+- Se premuto, consuma l’azione e imposta il dialogo come finito.
+
+```onDialogueFinished()```
+Quando la frase attuale è stata mostrata:
+- il dialogo viene chiuso
+- lo stato del gioco torna a EngineState.RUNNING
+- il messaggio successivo sarà mostrato al prossimo avvio
+
+### 6.4 Dal ProximityComponent all'UIRotatingDialogue
+
+In sintesi, ecco che cosa succede quando viene visualizzato un dialogo: 
+1.	L'**InteractionSystem** aggiorna il **ProximityComponent**: modifica il flag isNear a seconda della distanza e attiva o disattiva la notifica **UINotification** di conseguenza.
+2.	Se la prossimità viene rilevata e il tasto per mostrare il dialogo risulta premuto, **InteractionSystem** cerca nell'entity il **DialogueComponent** e, se presente, lo attiva.
+3.	Il **DialogueComponent** avvia il dialogo tramite **UIDialogue** (in questo caso istanza di **UIRotatingDialogue**), portando lo stato dell'engine a **SHOWING_DIALOGUE** e mostrando la frase corrente.
+4.	Quando il giocatore preme di nuovo il tasto per avviare il dialogo, **UIRotatingDialogue** viene nascosto, l'engine torna allo stato **RUNNING** e si avanza alla frase successiva da mostrare alla chiamata seguente.
 
