@@ -196,3 +196,98 @@ Disegna il frame corrente sopra l’entità trackedEntity. Il disegno tiene cont
 
 Serve per resettare l’animazione alla prima immagine, utile quando l’elemento viene nascosto e poi mostrato di nuovo. Tipicamente chiamato da ```ProximityComponent.setTriggered(false)``` per azzerare l’effetto visivo quando il giocatore si allontana.
 
+## 4 DialogueComponent
+
+Il DialogueComponent collega un’entità di gioco (tipicamente un NPC) a:
+- un elemento grafico di dialogo (UIDialogue)
+- un componente di input da tastiera (KeyInputComponent)
+
+È pensato per essere attivato esternamente da InteractionSystem quando il giocatore interagisce con l’NPC.
+
+### 4.1 Attributi principali
+
+| Campo	| Tipo	| Descrizione |
+|---------|---------|-------------|
+| dialogueElement	| UIDialogue	| L’interfaccia visiva del dialogo (es. finestra di testo). |
+| keyInput	| KeyInputComponent	| Il componente che riceve input per avanzare nel dialogo. |
+
+### 4.2 Costruttore
+
+```public DialogueComponent(Entity entity, UIDialogue dialogueElement, KeyInputComponent keyInput)```
+
+Associa:
+- un NPC (entity)
+- un’interfaccia di dialogo (dialogueElement, per esempio UIRotatingDialogue)
+- un sistema di input per controllare il flusso del dialogo
+
+Il DialogueComponent non gestisce direttamente la logica del dialogo, ma attiva e disattiva l’interfaccia con metodi semplici.
+
+### 4.3 Metodi principali
+
+- ```startDialogue()```
+
+  Attiva il dialogo, rendendo visibile l’interfaccia.
+
+- ```endDialogue()```
+
+  Nasconde l’interfaccia grafica, chiudendo il dialogo:
+
+- ```getDialogueElement()```
+
+  Restituisce l’oggetto UIDialogue associato
+
+- ```getKeyInputComponent()```
+
+  Restituisce il componente input per monitorare lo stato della tastiera
+
+## 5. UIDialogue
+
+UIDialogue è una classe astratta che fornisce un’interfaccia e una logica di base per la gestione di interfacce di dialogo UI.
+Definisce le regole generali su:
+- ciclo di vita del dialogo
+- stato (attivo / terminato)
+- aggiornamento e disegno condizionato allo stato
+- gestione dell’input utente
+
+È pensata per essere estesa da classi concrete che definiscono:
+- come viene mostrato il dialogo
+- come si avanza tra le frasi
+- come termina il dialogo
+
+### 5.1  Attributi principali
+
+| Campo	| Tipo	| Descrizione |
+|---------|---------|-------------|
+| state	| DialogueState	| Stato attuale del dialogo: ACTIVE o FINISHED. |
+| triggered	| boolean	| Flag per sapere se il dialogo è stato attivato da un evento (opzionale). |
+
+### 5.2 Stato del dialogo
+
+La classe gestisce lo stato con l’enum interno ```DialogueState```:
+
+```java
+enum DialogueState {
+    ACTIVE,
+    FINISHED
+}
+```
+
+Lo stato controlla:
+- se il dialogo deve essere aggiornato o disegnato
+- se deve reagire agli input
+
+### 5.3 Metodi astratti da implementare
+
+Le sottoclassi devono implementare i seguenti metodi:
+
+| Metodo	| Scopo |
+|---------|-------|
+| startDialogue()	| Avvia il dialogo (es. mostra il box e la prima frase). |
+| updateDialogue(float)	| Logica per far avanzare o animare il dialogo. |
+| renderDialogue(Graphics2D)	| Disegna l’interfaccia del dialogo. |
+| handleInput(KeyInputComponent)	| Gestisce l’input da tastiera per avanzare o chiudere. |
+
+### 5.4 Gestione dello stato
+
+Il metodo protetto ```setState(DialogueState newState)``` consente di cambiare lo stato del dialogo. Se lo stato diventa FINISHED viene chiamato il metodo onDialogueFinished(), che può essere sovrascritto nelle sottoclassi per notificare la fine del dialogo al resto del sistema.
+
