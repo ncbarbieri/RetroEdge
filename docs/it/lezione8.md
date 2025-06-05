@@ -351,3 +351,115 @@ In sintesi, ecco che cosa succede quando viene visualizzato un dialogo:
 3.	Il **DialogueComponent** avvia il dialogo tramite **UIDialogue** (in questo caso istanza di **UIRotatingDialogue**), portando lo stato dell'engine a **SHOWING_DIALOGUE** e mostrando la frase corrente.
 4.	Quando il giocatore preme di nuovo il tasto per avviare il dialogo, **UIRotatingDialogue** viene nascosto, l'engine torna allo stato **RUNNING** e si avanza alla frase successiva da mostrare alla chiamata seguente.
 
+## 7. Esempio
+Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seguire i seguenti passi:
+
+1. **Creazione dell’entità NPC**: Nel PlayState, iniziamo creando una nuova entità di tipo NPC e il suo spritesheet.
+
+   ```java
+   Entity soldier = new Entity(EntityType.NPC, 2);
+   CharacterSpritesheet soldierSpritesheet = new CharacterSpritesheet("/npcs/spritesheet.sprite");
+   ```
+
+2. **Movimento automatico tra due punti**: Creiamo l'attributo currentTarget e definiamo i punti tra cui il personaggio si sposterà.
+
+   ```java
+   int[] targetX = { 930, 1026 };
+   int[] targetY = { 1330, 1330 };
+   currentTarget = 0; // Aggiungere currentTarget come attributo della classe PlayState
+   ```
+
+3. **MotionComponent**: Creiamo un componente MotionComponent per gestire la posizione e il movimento
+
+   ```java
+   MotionComponent soldierPosition = new MotionComponent(soldier, targetX[currentTarget], targetY[currentTarget], 80.0f);
+   currentTarget++;
+   soldier.addComponent(soldierPosition);
+   ```
+
+4. **Aggiunta del Collider e dello Sprite**: Per rilevare le collisioni e disegnare il personaggio, aggiungiamo i relativi componenti.
+
+   ```java
+   ColliderComponent soldierCollider = new ColliderComponent(soldier, soldierSpritesheet.getBoundingBox(), CollisionBehavior.STATIC);
+   soldier.addComponent(soldierCollider);
+
+   SpriteComponent soldierSprites = new SpriteComponent(soldier, soldierSpritesheet, .1f, true);
+   soldier.addComponent(soldierSprites);
+   ```
+
+5. **Comportamento dell’NPC**: Utilizziamo NPCComponent per gestire il movimento continuo.
+
+   ```java
+   NPCComponent npcComponent = new NPCComponent(soldier, targetX[currentTarget], targetY[currentTarget]);
+   npcComponent.setOnTargetReached(() -> {
+   	if (++currentTarget >= targetX.length)
+   		currentTarget = 0;
+   	npcComponent.setTargetPosition(targetX[currentTarget], targetY[currentTarget]);
+   });
+   soldier.addComponent(npcComponent);
+   ```
+
+5. **Rilevamento di prossimità**: Aggiungiamo un ProximityComponent che rileva la vicinanza del giocatore e, infine, aggiungiamo l'entity all'engine.
+
+   ```java
+   ProximityComponent prc = new ProximityComponent(soldier, 120.0f, other -> other == player);
+   soldier.addComponent(prc);
+   add(soldier);
+   ```
+
+6. **Notifica visiva**: Creiamo la notifica che compare l’NPC quando il player si avvicina e aggiungiamola all'engine.
+
+   ```java
+   Entity uiSpeech = new Entity(EntityType.UI, 5);
+   UISpritesheet speechBubble = new UISpritesheet("/ui/speech_bubble.png", 22, 22);
+   UINotification ne = new UINotification(36, -8, 1, soldier, speechBubble, .15f);
+   prc.setNotificationElement(ne);
+
+   UIComponent speechComponent = new UIComponent(uiSpeech, ne);
+   uiSpeech.addComponent(speechComponent);
+   add(uiSpeech);
+   ```
+
+7. **Gestione del dialogo**: Creiamo l’interfaccia di dialogo vera e propria.
+
+   ```java
+   Entity uiDialogue = new Entity(EntityType.UI, 5);
+   UIRotatingDialogue dialogue = new UIRotatingDialogue(0, 0, 1, engine.getStateManager(), font, Color.WHITE, new Color(0f, 0f, 0f, .5f), "/ui/dialog_box.png");
+   ```
+
+   Definiamo le battute del personaggio:
+
+   ```java
+   String[] dialogues = {
+   	"Dialogue\nOne",
+   	"Dialogue\nTwo",
+   	"Dialogue\nThree"
+   };
+   dialogue.setDialogues(Arrays.asList(dialogues));
+   ```
+
+   Aggiungiamo il componente UI e il controllo input:
+
+   ```java
+   UIComponent dialogueComponent = new UIComponent(uiDialogue, dialogue);
+   uiDialogue.addComponent(dialogueComponent);
+
+   KeyInputComponent uiInput = new KeyInputComponent(uiDialogue);
+   uiDialogue.addComponent(uiInput);
+   ```
+
+   Infine, colleghiamo tutto all’NPC:
+
+   ```java
+   DialogueComponent soldierDialogue = new DialogueComponent(soldier, dialogue, uiInput);
+   soldier.addComponent(soldierDialogue);
+   add(uiDialogue);
+   ```
+
+8. **Definizione dei tasti**: Aggiungiamo all'InputSystem la definizione del tasto per l'attivazione del dialogo.
+
+   ```java
+   // Il tasto Enter attiva il dialogo
+   inputSystem.bindAction(InputAction.DIALOG, KeyEvent.VK_ENTER);
+   inputSystem.addDebouncedAction(InputAction.DIALOG);
+   ```
