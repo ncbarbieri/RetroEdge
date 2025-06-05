@@ -98,7 +98,7 @@ Il ProximityComponent consente a un’entità (tipicamente un NPC) di rilevare l
 - attivare uno stato interno
 - visualizzare un elemento grafico di notifica (es. un fumetto)
 
-Attributi principali:
+## 2.1 Attributi principali
 
 | Campo	| Tipo	| Descrizione |
 |-------|-------|-------------|
@@ -109,38 +109,36 @@ Attributi principali:
 | notificationElement	| UINotification	| Icona grafica associata (es. fumetto). |
 
 
-### 2.1 Costruttori
+### 2.2 Costruttori
 
-```java
-public ProximityComponent(Entity entity, float interactionRange)
-```
+- ```public ProximityComponent(Entity entity, float interactionRange)```
 
-Inizializza con un range e nessun filtro (tutte le entità possono attivarlo).
+  Inizializza con un range e nessun filtro (tutte le entità possono attivarlo).
 
-```java
-public ProximityComponent(Entity entity, float interactionRange, Predicate<Entity> activationFilter)
-```
+- ```public ProximityComponent(Entity entity, float interactionRange, Predicate<Entity> activationFilter)```
 
-Aggiunge anche un filtro che può limitare chi ha il diritto di attivare il componente (es. solo il player).
+  Aggiunge anche un filtro che può limitare chi ha il diritto di attivare il componente (es. solo il player).
 
-### 2.2 Metodi principali
+### 2.3 Metodi principali
 
-isTriggered()
+- ```public boolean isTriggered()```
 
-Restituisce lo stato attuale (true se almeno un’entità ha attivato la prossimità).
+  Restituisce lo stato attuale (true se almeno un’entità ha attivato la prossimità).
 
-addTriggeringEntity(Entity entity)
+- ```public void addTriggeringEntity(Entity entity)```
 
-Aggiunge un’entità tra quelle che stanno attivando il componente. Se supera il filtro (canActivate()), attiva lo stato e mostra la notifica (se presente).
+  Aggiunge un’entità tra quelle che stanno attivando il componente. Se supera il filtro (canActivate()), attiva lo stato e mostra la notifica (se presente).
 
-removeTriggeringEntity(Entity entity)
+- ```public void removeTriggeringEntity(Entity entity)```
 
-Rimuove un’entità dal set. Se non rimane più nessuna entità attiva, disattiva il componente e nasconde la notifica.
+  Rimuove un’entità dal set. Se non rimane più nessuna entità attiva, disattiva il componente e nasconde la notifica.
 
-clearTriggeringEntities()
+- ```public void clearTriggeringEntities()```
 
-Rimuove tutte le entità e resetta lo stato a false.
+  Rimuove tutte le entità e resetta lo stato a false.
 
-canActivate(Entity other)
+- ```public boolean canActivate(Entity other)```
 
-Valuta se una certa entità può attivare la prossimità secondo il filtro. Se non è definito alcun filtro (null), qualsiasi entità è valida.
+  Valuta se una certa entità può attivare la prossimità secondo il filtro. Se non è definito alcun filtro (null), qualsiasi entità è valida.
+
+
