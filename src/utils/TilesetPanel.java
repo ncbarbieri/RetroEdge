@@ -387,22 +387,26 @@ public class TilesetPanel extends JPanel {
         Dimension tileDimensions = null;
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            boolean check;
             String line = reader.readLine();
             if (line != null) {
-//                String[] firstRow = line.split(",");
+            	check = true;
                 int cols = line.length(); // Numero di colonne (larghezza)
                 int rows = 1; // Numero di righe almeno una
 
                 // Continua a contare le righe per determinare l'altezza
                 while ((line = reader.readLine()) != null) {
                 	rows++;
+                	if (line.length()!=cols)
+                		check = false;
                 }
 
-                tileDimensions = new Dimension(imageSize.width / cols, imageSize.height / rows);
+                if (check)
+                	tileDimensions = new Dimension(imageSize.width / cols, imageSize.height / rows);
             }
             reader.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error while reading file " + filePath);
         }
         return tileDimensions;
     }    
