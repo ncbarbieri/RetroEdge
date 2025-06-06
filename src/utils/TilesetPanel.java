@@ -200,7 +200,7 @@ public class TilesetPanel extends JPanel {
         this.currentImageFileName = filePath;
         
         Dimension imageSize = new Dimension(tilesetImage.getWidth(),tilesetImage.getHeight());
-        Dimension tileSize = getTileDimensionsFromFile(filePath.replace(".png", ".solid.txt"));
+        Dimension tileSize = getTileDimensionsFromFile(filePath.replace(".png", ".solid.txt"), imageSize);
         if (tileSize == null) {
             // Chiedi la dimensione delle tile
             tileSize = getTileSizeFromUser(new Dimension(32, 32));
@@ -210,11 +210,11 @@ public class TilesetPanel extends JPanel {
             }
         }
         
-		tileWidth = imageSize.width / tileSize.width;
-		tileHeight = imageSize.height / tileSize.height;
+		this.tileWidth = tileSize.width;
+		this.tileHeight = tileSize.height;
 
-        this.cols = tilesetImage.getWidth() / tileWidth;
-        this.rows = tilesetImage.getHeight() / tileHeight;
+        this.cols = imageSize.width / this.tileWidth;
+        this.rows = imageSize.height / this.tileHeight;
         this.solidTiles = new boolean[rows][cols];
 
         // Verifica se esiste un file .txt per caricare la griglia delle tile solide
@@ -383,22 +383,22 @@ public class TilesetPanel extends JPanel {
         }
     }
     
-    public Dimension getTileDimensionsFromFile(String filePath) {
+    public Dimension getTileDimensionsFromFile(String filePath, Dimension imageSize) {
         Dimension tileDimensions = null;
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             String line = reader.readLine();
             if (line != null) {
 //                String[] firstRow = line.split(",");
-                int tileWidth = line.length(); // Numero di colonne (larghezza)
-                int tileHeight = 1; // Numero di righe almeno una
+                int cols = line.length(); // Numero di colonne (larghezza)
+                int rows = 1; // Numero di righe almeno una
 
                 // Continua a contare le righe per determinare l'altezza
                 while ((line = reader.readLine()) != null) {
-                    tileHeight++;
+                	rows++;
                 }
 
-                tileDimensions = new Dimension(tileWidth, tileHeight);
+                tileDimensions = new Dimension(imageSize.width / cols, imageSize.height / rows);
             }
             reader.close();
         } catch (IOException e) {
