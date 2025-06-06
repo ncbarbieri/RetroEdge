@@ -354,14 +354,19 @@ In sintesi, ecco che cosa succede quando viene visualizzato un dialogo:
 ## 7. Esempio
 Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seguire i seguenti passi:
 
-1. **Creazione dell’entità NPC**: Nel PlayState, iniziamo creando una nuova entità di tipo NPC e il suo spritesheet.
+1. **Creazione dell’attributo currentTarget**: Creiamo l'attributo currentTarget che conterrà l'indice della destinazione corrente.
+   ```java
+   private int currentTarget;
+   ```
+   
+2. **Creazione dell’entità NPC**: Nel PlayState, iniziamo creando una nuova entità di tipo NPC e il suo spritesheet.
 
    ```java
    Entity soldier = new Entity(EntityType.NPC, 2);
    CharacterSpritesheet soldierSpritesheet = new CharacterSpritesheet("/npcs/spritesheet.sprite");
    ```
 
-2. **Movimento automatico tra due punti**: Creiamo l'attributo currentTarget e definiamo i punti tra cui il personaggio si sposterà.
+3. **Movimento automatico tra due punti**: Creiamo l'attributo currentTarget e definiamo i punti tra cui il personaggio si sposterà.
 
    ```java
    int[] targetX = { 930, 1026 };
@@ -369,7 +374,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    currentTarget = 0; // Aggiungere currentTarget come attributo della classe PlayState
    ```
 
-3. **MotionComponent**: Creiamo un componente MotionComponent per gestire la posizione e il movimento
+4. **MotionComponent**: Creiamo un componente MotionComponent per gestire la posizione e il movimento
 
    ```java
    MotionComponent soldierPosition = new MotionComponent(soldier, targetX[currentTarget], targetY[currentTarget], 80.0f);
@@ -377,7 +382,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    soldier.addComponent(soldierPosition);
    ```
 
-4. **Aggiunta del Collider e dello Sprite**: Per rilevare le collisioni e disegnare il personaggio, aggiungiamo i relativi componenti.
+5. **Aggiunta del Collider e dello Sprite**: Per rilevare le collisioni e disegnare il personaggio, aggiungiamo i relativi componenti.
 
    ```java
    ColliderComponent soldierCollider = new ColliderComponent(soldier, soldierSpritesheet.getBoundingBox(), CollisionBehavior.STATIC);
@@ -387,7 +392,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    soldier.addComponent(soldierSprites);
    ```
 
-5. **Comportamento dell’NPC**: Utilizziamo NPCComponent per gestire il movimento continuo.
+6. **Comportamento dell’NPC**: Utilizziamo NPCComponent per gestire il movimento continuo.
 
    ```java
    NPCComponent npcComponent = new NPCComponent(soldier, targetX[currentTarget], targetY[currentTarget]);
@@ -399,7 +404,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    soldier.addComponent(npcComponent);
    ```
 
-5. **Rilevamento di prossimità**: Aggiungiamo un ProximityComponent che rileva la vicinanza del giocatore e, infine, aggiungiamo l'entity all'engine.
+7. **Rilevamento di prossimità**: Aggiungiamo un ProximityComponent che rileva la vicinanza del giocatore e, infine, aggiungiamo l'entity all'engine.
 
    ```java
    ProximityComponent prc = new ProximityComponent(soldier, 120.0f, other -> other == player);
@@ -407,7 +412,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    add(soldier);
    ```
 
-6. **Notifica visiva**: Creiamo la notifica che compare l’NPC quando il player si avvicina e aggiungiamola all'engine.
+8. **Notifica visiva**: Creiamo la notifica che compare l’NPC quando il player si avvicina e aggiungiamola all'engine.
 
    ```java
    Entity uiSpeech = new Entity(EntityType.UI, 5);
@@ -420,7 +425,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    add(uiSpeech);
    ```
 
-7. **Gestione del dialogo**: Creiamo l’interfaccia di dialogo vera e propria.
+9. **Gestione del dialogo**: Creiamo l’interfaccia di dialogo vera e propria.
 
    ```java
    Entity uiDialogue = new Entity(EntityType.UI, 5);
@@ -456,7 +461,7 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    add(uiDialogue);
    ```
 
-8. **Definizione dei tasti**: Aggiungiamo all'InputSystem la definizione del tasto per l'attivazione del dialogo.
+10. **Definizione dei tasti**: Aggiungiamo all'InputSystem la definizione del tasto per l'attivazione del dialogo.
 
    ```java
    // Il tasto Enter attiva il dialogo
