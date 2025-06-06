@@ -354,7 +354,7 @@ In sintesi, ecco che cosa succede quando viene visualizzato un dialogo:
 ## 7. Esempio
 Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seguire i seguenti passi:
 
-1. **Creazione dell’attributo currentTarget**: Creiamo l'attributo currentTarget che conterrà l'indice della destinazione corrente.
+1. **Creazione dell’attributo currentTarget**: Aggiungiamo l'attributo currentTarget che conterrà l'indice della destinazione corrente.
    ```java
    private int currentTarget;
    ```
@@ -371,10 +371,10 @@ Per creare un NPC con la gestione della prossimità e dei dialoghi, dobbiamo seg
    ```java
    int[] targetX = { 930, 1026 };
    int[] targetY = { 1330, 1330 };
-   currentTarget = 0; // Aggiungere currentTarget come attributo della classe PlayState
+   currentTarget = 0;
    ```
 
-4. **MotionComponent**: Creiamo un componente MotionComponent per gestire la posizione e il movimento
+4. **MotionComponent**: Creiamo un componente MotionComponent per gestire la posizione e il movimento. Usiamo la prima posizione come iniziale e incrementiamo l'indice currentTarget per muovere l'NPC verso la successiva.
 
    ```java
    MotionComponent soldierPosition = new MotionComponent(soldier, targetX[currentTarget], targetY[currentTarget], 80.0f);
