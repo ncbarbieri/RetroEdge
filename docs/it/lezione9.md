@@ -145,10 +145,10 @@ Questo isolamento garantisce che l’intera logica della scena animata sia auton
 
 | Fase	| Azione |
 |-------|--------|
-| 1. Inizio interazione	| Il InteractionSystem rileva la collisione con la buca e attiva il callback. |
+| 1. Inizio interazione	| L'InteractionSystem rileva la collisione con la buca e attiva il callback. |
 | 2. Cambio stato	| engine.getStateManager().requestStateChange(CUTSCENE) disattiva logiche standard. |
 | 3. Blocchi di sicurezza	| playerInput.setEnabled(false) e pitInteraction.setInteractable(false) impediscono ripetizioni e movimenti. |
-| 4. Attivazione animazione	| Il SpriteComponent imposta FALL, looping=false, e registra onAnimationEnd. |
+| 4. Attivazione animazione	| Lo SpriteComponent imposta FALL, looping=false, e registra onAnimationEnd. |
 | 5. Avanzamento automatico	| L’AnimationSystem aggiorna i frame finché l’animazione non finisce. |
 | 6. Callback finale	| La Runnable viene eseguita: si ripristinano input, interazioni, stato RUNNING. |
 
