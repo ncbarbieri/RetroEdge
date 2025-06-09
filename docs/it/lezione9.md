@@ -134,10 +134,25 @@ Dettagli di funzionamento:
    - disattiva animating;
    - esegue il Runnable associato.
 
+## 3. Stato CUTSCENE e integrazione con il ciclo di gioco
 
-## 3. Esempio pratico: la buca (Pit)
+Quando lo stato del gioco è CUTSCENE:
+- Il CollisionSystem viene disattivato, evitando il continuo riposizionamento del personaggio in caso di collisione persistente (es. con la buca).
+- Anche il InteractionComponent viene disattivato temporaneamente (setInteractable(false)), evitando che l’interazione si riattivi in loop.
+- L’InputComponent del giocatore viene disabilitato, per impedire movimenti manuali durante la sequenza.
 
-Obiettivo
+Questo isolamento garantisce che l’intera logica della scena animata sia autonoma e controllata. Ecco cosa succede in sequenza:
+
+| Fase	| Azione |
+|-------|--------|
+| 1. Inizio interazione	| Il InteractionSystem rileva la collisione con la buca e attiva il callback. |
+| 2. Cambio stato	| engine.getStateManager().requestStateChange(CUTSCENE) disattiva logiche standard. |
+| 3. Blocchi di sicurezza	| playerInput.setEnabled(false) e pitInteraction.setInteractable(false) impediscono ripetizioni e movimenti. |
+| 4. Attivazione animazione	| Il SpriteComponent imposta FALL, looping=false, e registra onAnimationEnd. |
+| 5. Avanzamento automatico	| L’AnimationSystem aggiorna i frame finché l’animazione non finisce. |
+| 6. Callback finale	| La Runnable viene eseguita: si ripristinano input, interazioni, stato RUNNING. |
+
+## 4. Esempio di codice integrato
 
 Creiamo una trappola che:
 - disabilita l’input del giocatore;
