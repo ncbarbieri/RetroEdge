@@ -167,7 +167,7 @@ pitInteraction.setOnEntityInteract(other -> {
     playerInput.setEnabled(false);
     pitInteraction.setInteractable(false);
     
-    // Imposta posizione iniziale e blocca il movimento
+    // Imposta posizione della buca e blocca il movimento
     playerPosition.setX(1736);
     playerPosition.setY(286);
     playerPosition.setVx(0);
