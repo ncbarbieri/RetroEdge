@@ -231,8 +231,24 @@ logo.setDestination(100, 100, 3.0f);
 logo.setVisible(true);
 ```
 
+## 4. Impostare lo Stato Iniziale del Gioco
 
-## 4. Esempio: Stato DemoState (immagine fissa, animata, in movimento)
+Una volta creato lo stato (ad esempio DemoState), è necessario configurare il motore in modo che venga avviato al lancio del gioco. Per farlo, bisogna modificare il metodo init() nella classe GameEngine, che estende Engine.
+
+Codice da aggiornare:
+
+```java
+@Override
+protected void init() {
+    this.setNextState(new DemoState(this));
+}
+```
+
+Nota
+- Lo stato impostato con setNextState(...) verrà attivato dopo la fase di inizializzazione dell’engine.
+- Il motore applicherà eventuali transizioni in ingresso definite dallo stato (getEnterTransition()), se presenti.
+
+## 5. Esempio: Stato DemoState (immagine fissa, animata, in movimento)
 
 La seguente classe rappresenta uno stato di gioco dimostrativo che include:
 - un’immagine statica come sfondo,
