@@ -27,9 +27,9 @@ public class EngineStateManager {
     private void initializeValidTransitions() {
         validTransitions.put(EngineState.STARTING, Set.of(EngineState.ENTERING, EngineState.RUNNING)); // Aggiunto RUNNING
         validTransitions.put(EngineState.ENTERING, Set.of(EngineState.RUNNING));
-        validTransitions.put(EngineState.RUNNING, Set.of(EngineState.PAUSED, EngineState.SHOWING_DIALOG, EngineState.CUTSCENE, EngineState.EXITING));
+        validTransitions.put(EngineState.RUNNING, Set.of(EngineState.PAUSED, EngineState.SHOWING_DIALOG, EngineState.CUTSCENE, EngineState.EXITING, EngineState.ENTERING, EngineState.RUNNING));
         validTransitions.put(EngineState.PAUSED, Set.of(EngineState.RUNNING));
-        validTransitions.put(EngineState.EXITING, Set.of(EngineState.ENTERING));
+        validTransitions.put(EngineState.EXITING, Set.of(EngineState.ENTERING, EngineState.RUNNING));
         validTransitions.put(EngineState.CUTSCENE, Set.of(EngineState.RUNNING));
         validTransitions.put(EngineState.SHOWING_DIALOG, Set.of(EngineState.RUNNING));
     }
