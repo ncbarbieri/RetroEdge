@@ -1,4 +1,4 @@
-# Lezione 1
+# Lezione 1 – La classe principale MainECS
 
 ## Il punto di ingresso: `MainECS.java`
 
@@ -11,12 +11,12 @@
 ---
 ### Introduzione
 
-In un’applicazione Java, l’esecuzione comincia sempre con il metodo `main`. Nel nostro progetto, la classe `MainECS.java` svolge precisamente questo ruolo: rappresenta il punto di partenza in cui:
+In ogni applicazione Java, l’esecuzione parte dal metodo main(String[] args). In questo progetto, la classe MainECS si occupa di configurare e avviare il motore di gioco, occupandosi del ciclo principale. Le operazioni svolte sono:
 
-1. Inizializziamo gli strumenti di input (tastiera e mouse).
-2. Creiamo il motore di gioco (o “engine”), che gestisce logica ed entità.
-3. Allestiamo l’interfaccia grafica creando la finestra principale (`JFrame`).
-4. Colleghiamo il nostro pannello di rendering (`GamePanel`) che si occuperà del disegno e del ciclo di gioco.
+1. Inizializzare gli strumenti di input (tastiera e mouse).
+2. Creare il motore di gioco (o “engine”), che gestisce logica ed entità.
+3. Allestire l’interfaccia grafica creando la finestra principale (`JFrame`).
+4. Collegare il pannello di rendering (`GamePanel`) che si occuperà del disegno e del ciclo di gioco.
 
 > Sebbene il nome della classe contenga “ECS”, in questa prima fase ci concentriamo soprattutto sullo scheletro dell’applicazione. Il pattern **Entity-Component-System** verrà approfondito nelle lezioni successive.
 
@@ -27,7 +27,7 @@ In un’applicazione Java, l’esecuzione comincia sempre con il metodo `main`. 
 ### 1. Costante del titolo
 
 ```java
-private static final String GAME_TITLE = "Game Tutorial";
+private static final String GAME_TITLE = "RetroEdge";
 ```
 
 È la scritta che appare sulla barra del titolo della finestra. 
@@ -277,5 +277,7 @@ public void windowFocusLost() {
 
 - `MainECS.java`: punto di partenza del gioco, setup finestra e input.
 - `GamePanel.java`: rendering e logica temporale.
+
+Nella prossima lezione analizzeremo la classe GamePanel, che si occupa del disegno e della gestione del ciclo update/render.
 
 ---
