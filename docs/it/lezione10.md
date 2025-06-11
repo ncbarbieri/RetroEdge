@@ -210,7 +210,7 @@ Immagine statica:
 
 ```java
 UIImage bg = new UIImage(0, 0, 1, "/ui/background.png");
-bg.setVisible(true);
+bg.show();
 ```
 
 Immagine animata:
@@ -220,7 +220,7 @@ UISpritesheet fire = new UISpritesheet("/title/fire.png", 30, 30);
 UIImage flame = new UIImage(200, 300, fire, 0.1f, 1);
 flame.setLooping(true);
 flame.startAnimation();
-flame.setVisible(true);
+flame.show();
 ```
 
 Immagine in movimento:
@@ -228,7 +228,7 @@ Immagine in movimento:
 ```java
 UIImage sword = new UIImage(195, -256, 3, "/title/logo.png");
 logo.setDestination(100, 100, 3.0f);
-logo.setVisible(true);
+logo.show();
 ```
 
 ## 4. Impostare lo Stato Iniziale del Gioco
