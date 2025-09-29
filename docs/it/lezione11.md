@@ -141,9 +141,11 @@ Come funziona JPS HV (orizzontale e verticale)?
    - va aggiunto alla open list
    - verranno esplorati dal Jump Point i salti verso tutte le direzioni
 
-Vediamo un esempio in cui viene individuato un forced neighbour. Questa è una delle condizioni nel metodo jump(...) quando il movimento è orizzontale verso destra:
+Vediamo un esempio in cui viene individuato un forced neighbour. Questa è una delle condizioni nel metodo jump quando il movimento è orizzontale verso destra:
 
+```java
 (isWalkable(neighbour.x, neighbour.y + 1) && !isWalkable(neighbour.x - dx, neighbour.y + 1))
+```
 
 ```
       x →
