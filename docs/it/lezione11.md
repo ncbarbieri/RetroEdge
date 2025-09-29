@@ -115,4 +115,195 @@ y↓  +---+---+---+---+---+
 2   | . | . | . | . | . |
 ```
 
+## 2. Algoritmo Jump Point Search (JPS) – Versione HV (solo orizzontale/verticale)
+
+JPS è un algoritmo che accelera il classico A* evitando di esplorare ogni singolo nodo sulla griglia.
+Invece di muoversi un passo alla volta, continua a saltare lungo una direzione finché:
+- raggiunge il goal
+- trova un ostacolo
+- esce dalla mappa
+- trova un punto critico dove è necessario cambiare direzione o sbloccare un percorso ➜ questo si chiama Jump Point
+
+Un Jump Point è un nodo in cui l’algoritmo interrompe il salto per avviare nuove esplorazioni. Succede quando:
+- è possibile cambiare direzione (es. arrivi a un bivio)
+- oppure il nodo permette di raggiungere un’altra cella libera che non sarebbe accessibile altrimenti (forced neighbour)
+
+Come funziona JPS HV (orizzontale e verticale)?
+
+1. Parti da un nodo corrente
+2. Per ogni direzione (su, giù, sinistra, destra), esegui un salto:
+   - Continua a camminare nella stessa direzione finché:
+      - non esci dalla mappa
+      - non trovi un muro
+      - non arrivi al goal
+      - non noti un muro di lato che blocca l’accesso a una cella laterale (forced neighbour)
+3. Nel caso di un forced neighbour, il nodo corrente è un Jump Point:
+   - va aggiunto alla open list
+   - verranno esplorati dal Jump Point i salti verso tutte le direzioni
+
+Vediamo un esempio in cui viene individuato un forced neighbour. Questa è una delle condizioni nel metodo jump(...) quando il movimento è orizzontale verso destra:
+
+(isWalkable(neighbour.x, neighbour.y + 1) && !isWalkable(neighbour.x - dx, neighbour.y + 1))
+
+```
+      x →
+      0   1   2   3   4
+y↓  +---+---+---+---+---+
+0   | S | @ | . | . | . |
+1   | # | . | . | . | . |
+2   | . | . | . | . | . |
+```
+
+L’algoritmo sta saltando verso destra (dx = 1) e si trova sul nodo (1,0).
+- la cella sotto (1,1) è libera
+- la cella alla sua sinistra (0,1) è un ostacolo.
+
+La cella (1,1) non può essere raggiunta da sinistra, quindi l’unico modo per accedervi è passando da (1,0): per questo motivo (1,0) è un Jump Point e viene aggiunto alla open list. 
+
+Vediamo un esempio:
+
+```
+      x →
+      0   1   2   3   4
+y↓  +---+---+---+---+---+
+0   | S | . | . | . | . |
+1   | # | . | # | . | . |
+2   | . | . | . | . | G |
+```
+
+Esecuzione JPS HV:
+1. Da (0,0), salto verso destra:
+   - (1,0) → libero
+2. A (1,0), verifica forced neighbour:
+   - Sotto: (1,1) è libera
+   - Alla sua sinistra: (0,1) è bloccata (#)
+   - Quindi (1,0) è un Jump Point, perché consente accesso a (1,1), che non sarebbe raggiungibile da sinistra.
+3. Da (1,1), salto verso destra:
+   - (2,1) → ostacolo → fermati
+4. Da (1,1), salto verso il basso:
+   - (1,2) → libero
+5. A (1,2), verifica forced neighbour:
+   - Alla sua destra: (2,2) è libera
+   - Sopra: (2,1) è bloccata (#)
+   - Quindi (1,2) è un Jump Point, perché consente accesso a (2,2), che non sarebbe raggiungibile dall'alto.
+6. Da (1,2), salto verso destra:
+   - (2,2) → libero
+   - (3,2) → libero
+   - (4,2) → Goal raggiunto
+
+Percorso trovato da JPS HV: (0,0) → (1,0) → (1,2) → (4,2)
+
+```
+      x →
+      0   1   2   3   4
+y↓  +---+---+---+---+---+
+0   | S | @ | . | . | . |
+1   | # | . | # | . | . |
+2   | . | @ | . | . | G |
+```
+### Perché JPS è più veloce di A*
+
+Nel classico A*, ogni nodo ha fino a 4 vicini (8 se vengono considerati anche i movimenti in diagonale) da esplorare.
+
+JPS invece:
+- Salta direttamente a nodi significativi (Jump Point)
+- Evita l’esplorazione di celle intermedie che non portano nuove scelte
+- Riduce il numero di nodi nella open list e nelle espansioni
+
+Questo rende JPS **molto più efficiente**, soprattutto su griglie grandi e con pochi ostacoli.
+
+### Approfondimenti
+
+- [Jump-Point Search: Less is More (AAAI 2011)](http://grastien.net/ban/articles/hg-aaai11.pdf) – paper originale
+- [A Visual Explanation of Jump Point Search (2013)](https://zerowidth.com/2013/a-visual-explanation-of-jump-point-search/) – guida illustrata e interattiva
+
+## 3. Classi coinvolte
+
+### ChaseComponent
+
+È un componente da assegnare al nemico.
+Contiene:
+- un riferimento al player (obiettivo da inseguire)
+- un riferimento al TileMap (per sapere dove sono gli ostacoli)
+- lo stato interno del pathfinding (es. lista dei nodi da seguire)
+
+### ChaseSystem
+
+È un sistema che:
+- controlla periodicamente tutti gli Entity con un ChaseComponent
+- calcola il percorso dal nemico al player
+- aggiorna la direzione del movimento seguendo la path trovata
+
+In pratica: si occupa di fare muovere automaticamente i nemici verso il giocatore.
+
+### PathFinder (classe astratta)
+
+Definisce l’interfaccia comune per qualsiasi algoritmo di pathfinding:
+- metodo search(),
+- accesso ai nodi,
+- tracciamento del percorso trovato
+
+Serve a poter cambiare algoritmo senza cambiare la logica di gioco.
+
+### AStarSearch (estende PathFinder)
+
+Implementa il classico algoritmo A*. Esamina i nodi con la formula f(n) = g(n) + h(n) ed espande tutti i possibili nodi.
+
+Vantaggi:
+- semplice
+- preciso
+
+Limiti:
+- lento su griglie grandi
+
+### JumpPointSearchHV (estende PathFinder)
+
+Implementa il Jump Point Search in versione solo orizzontale/verticale (HV). Ottimizza A* saltando nodi inutili e analizzando solo i “nodi chiave”.
+
+Vantaggi:
+- molto più veloce
+- meno nodi esplorati
+
+## 4. Esempio: far seguire il player da un nemico
+
+Codice da inserire nel PlayState:
+
+```java
+// NUOVO - Creazione nemico "Knight"
+Entity knight = new Entity(EntityType.ENEMY, 2);
+
+// Caricamento sprite
+CharacterSpritesheet knightSpritesheet = new CharacterSpritesheet("/enemies/spearKnight.sprite");
+
+// Posizione iniziale e velocità
+MotionComponent knightPosition = new MotionComponent(knight, 1000, 550, 100.0f);
+knight.addComponent(knightPosition);
+
+// Collider per collisioni
+ColliderComponent knightCollider = new ColliderComponent(knight, knightSpritesheet.getBoundingBox(), CollisionBehavior.STATIC);
+knight.addComponent(knightCollider);
+
+// Componente per inseguire il player
+ChaseComponent knightChaser = new ChaseComponent(knight, player, world);
+knight.addComponent(knightChaser);
+
+// Sprite e animazioni
+SpriteComponent knightSprites = new SpriteComponent(knight, knightSpritesheet, 0.2f, true);
+knight.addComponent(knightSprites);
+
+// Vita del nemico
+HealthComponent knightHealth = new HealthComponent(knight, 3);
+knight.addComponent(knightHealth);
+
+// Aggiungi l'entità nemico alla scena
+add(knight);
+```
+
+
+Attiva infine il sistema di inseguimento:
+
+```java
+// NUOVO - Sistema di pathfinding nemici
+add(new ChaseSystem(this.engine));
+```
 
