@@ -11,28 +11,46 @@ import engine.Component;
 import engine.Entity;
 
 public class HealthComponent extends Component {
+
+    private int health;
     private int maxHealth;
-    private int currentHealth;
+    private Runnable onDeath;
 
     public HealthComponent(Entity entity, int maxHealth) {
-    	super(entity);
+        super(entity);
         this.maxHealth = maxHealth;
-        this.currentHealth = maxHealth;
-    }
-
-    public int getMaxHealth() {
-        return maxHealth;
-    }
-
-    public int getCurrentHealth() {
-        return currentHealth;
+        this.health = maxHealth;
     }
 
     public void decreaseHealth(int amount) {
-        currentHealth = Math.max(0, currentHealth - amount);
+        health -= amount;
+        if (health < 0) health = 0;
+
+        if (health == 0 && onDeath != null) {
+            onDeath.run();
+        }
     }
 
     public void increaseHealth(int amount) {
-        currentHealth = Math.min(maxHealth, currentHealth + amount);
+        health += amount;
+        if (health > maxHealth) health = maxHealth;
+    }
+
+    public void resetHealth() {
+        health = maxHealth;
+    }
+
+    public int getHealth() { return health; }
+    public int getMaxHealth() { return maxHealth; }
+
+    public boolean isDead() { return health <= 0; }
+
+    public void setOnDeath(Runnable onDeath) {
+        this.onDeath = onDeath;
+    }
+
+    public void kill() {
+        health = 0;
+        if (onDeath != null) onDeath.run();
     }
 }
