@@ -324,223 +324,7 @@ Quando il giocatore preme SPAZIO:
 | HealthComponent	| Subisce il danno se la hitbox lo colpisce. |
 | AttackSystem	| Coordina il tutto e applica il danno effettivo. |
 
-## 4.  Attacchi a distanza – ThrowProjectileComponent e ProjectileSystem
-
-Dopo aver introdotto gli attacchi corpo a corpo, questa lezione affronta il tema degli attacchi a distanza, una meccanica comune nei giochi d’azione e di ruolo.
-Nel nostro motore, questa funzione è gestita da due elementi principali:
-- un componente di lancio (ThrowProjectileComponent), che si occupa della preparazione del colpo e della creazione del proiettile;
-- un sistema di gestione dei proiettili (ProjectileSystem), che ne controlla il movimento, la durata e le collisioni.
-
-### 4.1  ThrowProjectileComponent – Logica del lancio
-
-Il ThrowProjectileComponent definisce la logica del lancio di un proiettile.
-Non gestisce direttamente il movimento, ma stabilisce:
-- quando deve essere lanciato un proiettile,
-- quale proiettile utilizzare,
-- con che velocità e per quanto tempo rimarrà attivo nel mondo.
-
-### 4.2 Struttura del componente
-
-```java
-package engine.components;
-
-import engine.Component;
-import engine.Entity;
-
-public class ThrowProjectileComponent extends Component {
-
-    private float lifetime;        // Durata di vita del proiettile
-    private float speed;           // Velocità del proiettile
-    private Entity projectile;     // Entità del proiettile da lanciare
-    private boolean throwing;      // True se è stato richiesto un lancio
-
-    public ThrowProjectileComponent(Entity entity, float lifetime, float speed, Entity projectile) {
-        super(entity);
-        this.lifetime = lifetime;
-        this.speed = speed;
-        this.projectile = projectile;
-        this.throwing = false;
-    }
-
-    public void throwProjectile() {
-        throwing = true; // Segnala al sistema che il proiettile deve essere lanciato
-    }
-
-    public boolean isThrowing() {
-        return throwing;
-    }
-
-    public void setThrowing(boolean throwing) {
-        this.throwing = throwing;
-    }
-
-    public float getLifetime() {
-        return lifetime;
-    }
-
-    public float getSpeed() {
-        return speed;
-    }
-
-    public Entity getProjectile() {
-        return projectile;
-    }
-}
-```
-
-Il ThrowProjectileComponent serve a preparare un lancio.
-Ogni entità che può lanciare un proiettile (come un arciere o un cavaliere nemico) possiede questo componente.
-Quando il suo stato interno (throwing) passa a true, il ProjectileSystem si occuperà di:
-- attivare il proiettile associato;
-- impostarne la direzione e la velocità;
-- posizionarlo nel mondo di gioco.
-
-Campi principali
-
-| Variabile	| Descrizione |
-|-----------|-------------|
-| lifetime	| Indica per quanto tempo il proiettile rimane attivo prima di essere distrutto. |
-| speed	| Rappresenta la velocità con cui si muove il proiettile dopo il lancio. |
-| projectile	| È l’entità che rappresenta il proiettile (freccia, lancia, magia, ecc.). |
-| throwing	| È un flag booleano che segnala al sistema che è stato richiesto un lancio. |
-
-### 4.3 Funzionamento generale
-
-Quando un’entità decide di attaccare a distanza (per esempio perché è scaduto un timer o perché il giocatore è a portata visiva), viene chiamato il metodo throwProjectile().
-Da quel momento:
-1.	il componente imposta throwing = true;
-2.	il ProjectileSystem intercetta questo stato e si occupa di eseguire il lancio effettivo;
-3.	una volta attivato il proiettile, throwing torna a false.
-
-Questo meccanismo disaccoppia completamente la decisione di lanciare dal lancio effettivo, rispettando il principio di separazione delle responsabilità tipico del modello ECS.
-
-## 5. ProjectileSystem – Gestione dei proiettili
-
-Il ProjectileSystem è il sistema che controlla tutti i proiettili presenti nel mondo di gioco.
-Il suo compito è duplice:
-- creare e lanciare nuovi proiettili quando viene richiesto;
-- aggiornare la posizione dei proiettili esistenti e disattivarli quando necessario.
-
-### 5.1 Struttura del sistema
-
-```java
-package engine.systems;
-
-import java.util.List;
-import engine.Engine;
-import engine.Entity;
-import engine.System;
-import engine.components.ThrowProjectileComponent;
-import engine.components.MotionComponent;
-import engine.components.ColliderComponent;
-import engine.enums.Direction;
-
-public class ProjectileSystem extends System {
-
-    public ProjectileSystem(Engine engine) {
-        super(engine);
-    }
-
-    @Override
-    public void update(float deltaTime) {
-        List<Entity> throwers = engine.getEntitiesWith(ThrowProjectileComponent.class, ColliderComponent.class);
-
-        for (Entity thrower : throwers) {
-            ThrowProjectileComponent throwComp = thrower.getComponent(ThrowProjectileComponent.class);
-            ColliderComponent throwerCollider = thrower.getComponent(ColliderComponent.class);
-
-            // Se è in corso un lancio
-            if (throwComp.isThrowing()) {
-                Entity projectile = throwComp.getProjectile();
-                ColliderComponent projectileCollider = projectile.getComponent(ColliderComponent.class);
-                MotionComponent projectileMotion = projectile.getComponent(MotionComponent.class);
-
-                // Posizione iniziale del proiettile
-                projectileCollider.getBounds().x = throwerCollider.getBounds().x;
-                projectileCollider.getBounds().y = throwerCollider.getBounds().y;
-                projectile.setAlive(true);
-
-                // Direzione e velocità del proiettile
-                Direction direction = throwerCollider.getDirection();
-                projectileMotion.setDirection(direction);
-                projectileMotion.setSpeed(throwComp.getSpeed());
-
-                // Disattiva il flag di lancio
-                throwComp.setThrowing(false);
-            }
-        }
-
-        // Aggiornamento dei proiettili attivi
-        for (Entity projectile : engine.getEntitiesWith(MotionComponent.class)) {
-            if (!projectile.isAlive()) continue;
-
-            MotionComponent motion = projectile.getComponent(MotionComponent.class);
-            motion.updatePosition(deltaTime);
-        }
-    }
-}
-```
-
-### 5.2 Spiegazione generale
-
-Il ProjectileSystem è responsabile dell’intero ciclo di vita dei proiettili, dalla creazione fino alla disattivazione.
-Si basa sullo stato dei componenti per capire quando un proiettile deve essere lanciato e come deve muoversi.
-
-Funzioni principali:
-
-| Funzione	| Descrizione |
-|-----------|-------------|
-| Controllo dei lanciatori	| Il sistema individua tutte le entità che possiedono un ThrowProjectileComponent e un ColliderComponent. |
-| Lancio del proiettile	| Se il flag throwing è attivo, il sistema posiziona e attiva il proiettile, impostandone direzione e velocità. |
-| Aggiornamento del movimento	| Tutti i proiettili attivi vengono spostati nel mondo in base ai dati del MotionComponent. |
-| Disattivazione	| Quando un proiettile esce dallo schermo o collide con un’entità, un altro componente (InteractionComponent) ne gestisce la disattivazione. |
-
-### 5.3 Collaborazione tra componenti
-
-Il ProjectileSystem non agisce da solo: funziona in coordinamento con altri componenti del motore di gioco, secondo la logica del modello ECS.
-
-| Componente	| Ruolo |
-|---------------|-------|
-| ThrowProjectileComponent	| Richiede il lancio del proiettile. |
-| MotionComponent	| Gestisce la velocità e l’aggiornamento della posizione del proiettile. |
-| ColliderComponent	e MotionComponent | Forniscono la posizione iniziale di lancio del proiettile a seconda della posizione iniziale del lanciatore. |
-| InteractionComponent	| Rileva le collisioni con tile o entità. |
-| HealthComponent	| Gestisce la riduzione della vita in caso di impatto. |
-
-### 5.4  Flusso generale dell’attacco a distanza
-
-Il comportamento complessivo di un attacco a distanza può essere riassunto nelle seguenti fasi:
-1.	Preparazione del lancio – un componente o un’IA decide che è il momento di attaccare.
-2.	Segnalazione del lancio – il flag throwing del ThrowProjectileComponent viene impostato a true.
-3.	Attivazione del proiettile – il ProjectileSystem rileva la richiesta e posiziona il proiettile a seconda della direzione del lanciatore.
-4.	Movimento – il MotionComponent sposta il proiettile frame dopo frame.
-5.	Collisione – se il proiettile incontra un ostacolo o un’entità, l’InteractionComponent gestisce la risposta (danno, distruzione, ecc.).
-6.	Fine vita – il proiettile viene disattivato quando ha terminato la sua traiettoria o la sua durata.
-
-
-### 5.5  Vantaggi dell’approccio ECS
-
-L’introduzione dei proiettili nel motore mantiene la coerenza con il modello Entity–Component–System.
-Ogni parte del comportamento è isolata e indipendente:
-
-| Vantaggio	| Descrizione |
-|-----------|-------------|
-| Modularità	| Nuovi tipi di proiettili possono essere aggiunti senza modificare i sistemi esistenti. |
-| Riutilizzabilità	| Lo stesso sistema funziona per nemici, boss o player. |
-| Semplicità di test	| Ogni componente può essere verificato singolarmente. |
-| Flessibilità	| È possibile definire effetti diversi all’impatto (danno, esplosione, rimbalzo, ecc.). |
-
-### 5.6  Sintesi
-
-| Elemento	| Responsabilità |
-|-----------|----------------|
-| ThrowProjectileComponent	| Definisce la logica di lancio e i parametri del proiettile. |
-| ProjectileSystem	| Gestisce la creazione, il movimento e la durata dei proiettili. |
-| MotionComponent	| Aggiorna la posizione nel tempo del proiettile. |
-| InteractionComponent	| Gestisce gli impatti con tile e altre entità. |
-| HealthComponent	| Riduce la vita dei bersagli colpiti. |
-
-## 6. TimerComponent e TimerSystem – Gestione del tempo e degli eventi periodici
+## 4. TimerComponent e TimerSystem – Gestione del tempo e degli eventi periodici
 
 Molte azioni nei videogiochi devono avvenire dopo un certo intervallo di tempo o ripetersi ciclicamente:
 un nemico che attacca ogni 5 secondi, una trappola che si attiva a intervalli regolari, oppure un effetto che dura solo per un tempo limitato.
@@ -549,12 +333,12 @@ Nel motore Retro Edge, questo comportamento è gestito da due elementi:
 - il TimerComponent, che tiene traccia del tempo trascorso per una determinata entità;
 - il TimerSystem, che aggiorna tutti i timer e attiva gli eventi associati quando scadono.
 
-### 6.1  TimerComponent – Gestione del tempo di attesa
+### 4.1  TimerComponent – Gestione del tempo di attesa
 
 Il TimerComponent rappresenta un conto alla rovescia legato a una singola entità.
 Può essere usato per eseguire un’azione automatica dopo un certo intervallo (ad esempio, far attaccare un nemico o far esplodere una bomba).
 
-### 6.2 Struttura del componente
+### 4.2 Struttura del componente
 
 ```java
 package engine.components;
@@ -625,7 +409,7 @@ Una volta raggiunta la durata impostata (time), il timer può:
 - eseguire un’azione (tramite una funzione lambda onTimeOver);
 - fermarsi, oppure ricominciare automaticamente se impostato come looping.
 
-### 6.3 Campi principali
+### 4.3 Campi principali
 
 | Variabile	| Descrizione |
 |-----------|-------------|
@@ -635,7 +419,7 @@ Una volta raggiunta la durata impostata (time), il timer può:
 | active	| Indica se il timer è attualmente in esecuzione. |
 | onTimeOver	| Funzione eseguita automaticamente allo scadere del timer. |
 
-### 6.4 Metodi principali
+### 4.4 Metodi principali
 
 | Metodo	| Descrizione |
 |-----------|-------------|
@@ -644,7 +428,7 @@ Una volta raggiunta la durata impostata (time), il timer può:
 | stop() / start()	| Ferma o riavvia il conteggio. |
 | setOnTimeOver(Runnable)	| Imposta l’azione da eseguire quando il timer termina. |
 
-### 6.5 Funzionamento
+### 4.5 Funzionamento
 
 Durante ogni aggiornamento del gioco, il sistema incrementa il valore elapsedTime con il tempo trascorso (deltaTime).
 Quando elapsedTime raggiunge la soglia time, viene eseguita la callback onTimeOver().
@@ -654,12 +438,12 @@ A seconda della configurazione:
 
 Questo meccanismo permette di gestire eventi temporizzati in modo completamente modulare.
 
-## 7.  TimerSystem – Aggiornamento globale dei timer
+### 4.6  TimerSystem – Aggiornamento globale dei timer
 
 Il TimerSystem è il sistema che controlla e aggiorna tutti i timer del gioco.
 Ogni entità può avere uno o più timer indipendenti, e il sistema garantisce che tutti vengano aggiornati in sincronia con il tempo di gioco.
 
-### 7.1 Struttura del sistema
+### 4.7 Struttura del sistema
 
 ```java
 package engine.systems;
@@ -704,7 +488,7 @@ Il TimerComponent può essere utilizzato per molte funzioni diverse:
 
 Grazie alla sua semplicità e flessibilità, questo componente è una delle basi per la gestione degli eventi temporali nel motore.
 
-### 7.2  Collaborazione con altri sistemi
+### 4.8  Collaborazione con altri sistemi
 
 Il TimerComponent è spesso utilizzato insieme ad altri componenti per creare comportamenti complessi.
 Ecco alcuni esempi tipici:
@@ -716,7 +500,7 @@ Ecco alcuni esempi tipici:
 | TimerComponent + SpriteComponent	| Cambia l’animazione dell’entità dopo un certo tempo. |
 | TimerComponent + HealthComponent	| Riduce gradualmente la vita (danno nel tempo). |
 
-### 7.3 Vantaggi del sistema di timer
+### 4.9 Vantaggi del sistema di timer
 
 | Vantaggio	| Descrizione |
 |-----------|-------------|
@@ -725,7 +509,7 @@ Ecco alcuni esempi tipici:
 | Controllo centralizzato	| Tutti i timer vengono aggiornati da un unico sistema, mantenendo la coerenza temporale. |
 | Modularità	| È possibile aggiungere o rimuovere timer in modo indipendente dalle altre logiche di gioco. |
 
-### 7.4  Sintesi
+### 4.10  Sintesi
 
 | Elemento	| Responsabilità |
 |-----------|----------------|
@@ -733,14 +517,230 @@ Ecco alcuni esempi tipici:
 | TimerSystem	| Aggiorna tutti i timer del gioco, garantendo la sincronizzazione temporale. |
 | onTimeOver()	| Permette di definire il comportamento personalizzato al termine del timer. |
 
-## 8. Integrazione nel PlayState – Attacco del player e del nemico
+## 5.  Attacchi a distanza – ThrowProjectileComponent e ProjectileSystem
+
+Dopo aver introdotto gli attacchi corpo a corpo, questa lezione affronta il tema degli attacchi a distanza, una meccanica comune nei giochi d’azione e di ruolo.
+Nel nostro motore, questa funzione è gestita da due elementi principali:
+- un componente di lancio (ThrowProjectileComponent), che si occupa della preparazione del colpo e della creazione del proiettile;
+- un sistema di gestione dei proiettili (ProjectileSystem), che ne controlla il movimento, la durata e le collisioni.
+
+### 5.1  ThrowProjectileComponent – Logica del lancio
+
+Il ThrowProjectileComponent definisce la logica del lancio di un proiettile.
+Non gestisce direttamente il movimento, ma stabilisce:
+- quando deve essere lanciato un proiettile,
+- quale proiettile utilizzare,
+- con che velocità e per quanto tempo rimarrà attivo nel mondo.
+
+### 5.2 Struttura del componente
+
+```java
+package engine.components;
+
+import engine.Component;
+import engine.Entity;
+
+public class ThrowProjectileComponent extends Component {
+
+    private float lifetime;        // Durata di vita del proiettile
+    private float speed;           // Velocità del proiettile
+    private Entity projectile;     // Entità del proiettile da lanciare
+    private boolean throwing;      // True se è stato richiesto un lancio
+
+    public ThrowProjectileComponent(Entity entity, float lifetime, float speed, Entity projectile) {
+        super(entity);
+        this.lifetime = lifetime;
+        this.speed = speed;
+        this.projectile = projectile;
+        this.throwing = false;
+    }
+
+    public void throwProjectile() {
+        throwing = true; // Segnala al sistema che il proiettile deve essere lanciato
+    }
+
+    public boolean isThrowing() {
+        return throwing;
+    }
+
+    public void setThrowing(boolean throwing) {
+        this.throwing = throwing;
+    }
+
+    public float getLifetime() {
+        return lifetime;
+    }
+
+    public float getSpeed() {
+        return speed;
+    }
+
+    public Entity getProjectile() {
+        return projectile;
+    }
+}
+```
+
+Il ThrowProjectileComponent serve a preparare un lancio.
+Ogni entità che può lanciare un proiettile (come un arciere o un cavaliere nemico) possiede questo componente.
+Quando il suo stato interno (throwing) passa a true, il ProjectileSystem si occuperà di:
+- attivare il proiettile associato;
+- impostarne la direzione e la velocità;
+- posizionarlo nel mondo di gioco.
+
+Campi principali
+
+| Variabile	| Descrizione |
+|-----------|-------------|
+| lifetime	| Indica per quanto tempo il proiettile rimane attivo prima di essere distrutto. |
+| speed	| Rappresenta la velocità con cui si muove il proiettile dopo il lancio. |
+| projectile	| È l’entità che rappresenta il proiettile (freccia, lancia, magia, ecc.). |
+| throwing	| È un flag booleano che segnala al sistema che è stato richiesto un lancio. |
+
+### 5.3 Funzionamento generale
+
+Quando un’entità decide di attaccare a distanza (per esempio perché è scaduto un timer o perché il giocatore è a portata visiva), viene chiamato il metodo throwProjectile().
+Da quel momento:
+1.	il componente imposta throwing = true;
+2.	il ProjectileSystem intercetta questo stato e si occupa di eseguire il lancio effettivo;
+3.	una volta attivato il proiettile, throwing torna a false.
+
+Questo meccanismo disaccoppia completamente la decisione di lanciare dal lancio effettivo, rispettando il principio di separazione delle responsabilità tipico del modello ECS.
+
+### 5.4 ProjectileSystem – Gestione dei proiettili
+
+Il ProjectileSystem è il sistema che controlla tutti i proiettili presenti nel mondo di gioco.
+Il suo compito è duplice:
+- creare e lanciare nuovi proiettili quando viene richiesto;
+- aggiornare la posizione dei proiettili esistenti e disattivarli quando necessario.
+
+### 5.5 Struttura del sistema
+
+```java
+package engine.systems;
+
+import java.util.List;
+import engine.Engine;
+import engine.Entity;
+import engine.System;
+import engine.components.ThrowProjectileComponent;
+import engine.components.MotionComponent;
+import engine.components.ColliderComponent;
+import engine.enums.Direction;
+
+public class ProjectileSystem extends System {
+
+    public ProjectileSystem(Engine engine) {
+        super(engine);
+    }
+
+    @Override
+    public void update(float deltaTime) {
+        List<Entity> throwers = engine.getEntitiesWith(ThrowProjectileComponent.class, ColliderComponent.class);
+
+        for (Entity thrower : throwers) {
+            ThrowProjectileComponent throwComp = thrower.getComponent(ThrowProjectileComponent.class);
+            ColliderComponent throwerCollider = thrower.getComponent(ColliderComponent.class);
+
+            // Se è in corso un lancio
+            if (throwComp.isThrowing()) {
+                Entity projectile = throwComp.getProjectile();
+                ColliderComponent projectileCollider = projectile.getComponent(ColliderComponent.class);
+                MotionComponent projectileMotion = projectile.getComponent(MotionComponent.class);
+
+                // Posizione iniziale del proiettile
+                projectileCollider.getBounds().x = throwerCollider.getBounds().x;
+                projectileCollider.getBounds().y = throwerCollider.getBounds().y;
+                projectile.setAlive(true);
+
+                // Direzione e velocità del proiettile
+                Direction direction = throwerCollider.getDirection();
+                projectileMotion.setDirection(direction);
+                projectileMotion.setSpeed(throwComp.getSpeed());
+
+                // Disattiva il flag di lancio
+                throwComp.setThrowing(false);
+            }
+        }
+
+        // Aggiornamento dei proiettili attivi
+        for (Entity projectile : engine.getEntitiesWith(MotionComponent.class)) {
+            if (!projectile.isAlive()) continue;
+
+            MotionComponent motion = projectile.getComponent(MotionComponent.class);
+            motion.updatePosition(deltaTime);
+        }
+    }
+}
+```
+
+### 5.6 Spiegazione generale
+
+Il ProjectileSystem è responsabile dell’intero ciclo di vita dei proiettili, dalla creazione fino alla disattivazione.
+Si basa sullo stato dei componenti per capire quando un proiettile deve essere lanciato e come deve muoversi.
+
+Funzioni principali:
+
+| Funzione	| Descrizione |
+|-----------|-------------|
+| Controllo dei lanciatori	| Il sistema individua tutte le entità che possiedono un ThrowProjectileComponent e un ColliderComponent. |
+| Lancio del proiettile	| Se il flag throwing è attivo, il sistema posiziona e attiva il proiettile, impostandone direzione e velocità. |
+| Aggiornamento del movimento	| Tutti i proiettili attivi vengono spostati nel mondo in base ai dati del MotionComponent. |
+| Disattivazione	| Quando un proiettile esce dallo schermo o collide con un’entità, un altro componente (InteractionComponent) ne gestisce la disattivazione. |
+
+### 5.7 Collaborazione tra componenti
+
+Il ProjectileSystem non agisce da solo: funziona in coordinamento con altri componenti del motore di gioco, secondo la logica del modello ECS.
+
+| Componente	| Ruolo |
+|---------------|-------|
+| ThrowProjectileComponent	| Richiede il lancio del proiettile. |
+| MotionComponent	| Gestisce la velocità e l’aggiornamento della posizione del proiettile. |
+| ColliderComponent	e MotionComponent | Forniscono la posizione iniziale di lancio del proiettile a seconda della posizione iniziale del lanciatore. |
+| InteractionComponent	| Rileva le collisioni con tile o entità. |
+| HealthComponent	| Gestisce la riduzione della vita in caso di impatto. |
+
+### 5.8  Flusso generale dell’attacco a distanza
+
+Il comportamento complessivo di un attacco a distanza può essere riassunto nelle seguenti fasi:
+1.	Preparazione del lancio – un componente o un’IA decide che è il momento di attaccare.
+2.	Segnalazione del lancio – il flag throwing del ThrowProjectileComponent viene impostato a true.
+3.	Attivazione del proiettile – il ProjectileSystem rileva la richiesta e posiziona il proiettile a seconda della direzione del lanciatore.
+4.	Movimento – il MotionComponent sposta il proiettile frame dopo frame.
+5.	Collisione – se il proiettile incontra un ostacolo o un’entità, l’InteractionComponent gestisce la risposta (danno, distruzione, ecc.).
+6.	Fine vita – il proiettile viene disattivato quando ha terminato la sua traiettoria o la sua durata.
+
+
+### 5.9  Vantaggi dell’approccio ECS
+
+L’introduzione dei proiettili nel motore mantiene la coerenza con il modello Entity–Component–System.
+Ogni parte del comportamento è isolata e indipendente:
+
+| Vantaggio	| Descrizione |
+|-----------|-------------|
+| Modularità	| Nuovi tipi di proiettili possono essere aggiunti senza modificare i sistemi esistenti. |
+| Riutilizzabilità	| Lo stesso sistema funziona per nemici, boss o player. |
+| Semplicità di test	| Ogni componente può essere verificato singolarmente. |
+| Flessibilità	| È possibile definire effetti diversi all’impatto (danno, esplosione, rimbalzo, ecc.). |
+
+### 5.10  Sintesi
+
+| Elemento	| Responsabilità |
+|-----------|----------------|
+| ThrowProjectileComponent	| Definisce la logica di lancio e i parametri del proiettile. |
+| ProjectileSystem	| Gestisce la creazione, il movimento e la durata dei proiettili. |
+| MotionComponent	| Aggiorna la posizione nel tempo del proiettile. |
+| InteractionComponent	| Gestisce gli impatti con tile e altre entità. |
+| HealthComponent	| Riduce la vita dei bersagli colpiti. |
+
+## 6. Integrazione nel PlayState – Attacco del player e del nemico
 
 In questa sezione concludiamo la lezione sugli attacchi, mostrando come integrare nel PlayState tutti i componenti e i sistemi introdotti:
 - l’attacco del player con la spada;
 - il lancio di proiettili da parte del nemico;
 - la gestione dei timer e degli eventi periodici.
 
-### 8.1  Aggiunta dei componenti al Player
+### 6.1  Aggiunta dei componenti al Player
 
 Il player deve poter:
 1.	avere un certo numero di punti vita;
@@ -771,7 +771,7 @@ Spiegazione:
 - ogni direzione di attacco ha la propria hitbox;
 - setOnAttack() riproduce un suono quando il colpo viene sferrato.
 
-### 8.2  Creazione dell’entità proiettile (Spear)
+### 6.2  Creazione dell’entità proiettile (Spear)
 
 Per il nemico che attacca a distanza, definiamo un’entità separata che rappresenta il proiettile.
 Il proiettile viene attivato e disattivato dal sistema in base alle collisioni.
@@ -815,7 +815,7 @@ Spiegazione:
 - ColliderComponent e CollisionMapComponent permettono la rilevazione delle collisioni;
 - InteractionComponent gestisce il comportamento al contatto (distruzione o danno).
 
-### 8.3  Attacco a distanza del nemico
+### 6.3  Attacco a distanza del nemico
 
 Il nemico (ad esempio un cavaliere) utilizza due nuovi componenti:
 - ThrowProjectileComponent per decidere quando lanciare il proiettile;
@@ -839,7 +839,7 @@ Spiegazione
 - allo scadere, esegue la lambda onTimeOver(), che richiama il metodo throwProjectile() del ThrowProjectileComponent;
 - il ProjectileSystem rileverà poi lo stato di lancio e attiverà il proiettile.
 
-### 8.4  Configurazione dell’InputSystem
+### 6.4  Configurazione dell’InputSystem
 
 Il tasto Spazio viene associato all’azione di attacco del player.
 Quando premuto, l’InputSystem comunica al AttackSystem di attivare l’attacco.
@@ -848,7 +848,7 @@ Quando premuto, l’InputSystem comunica al AttackSystem di attivare l’attacco
 // da aggiungere all'InputSystem
 inputSystem.bindAction(InputAction.ATTACK, KeyEvent.VK_SPACE);
 ```
-### 8.5  Registrazione dei sistemi nel motore
+### 6.5  Registrazione dei sistemi nel motore
 
 Infine, aggiungiamo i nuovi sistemi all’engine per aggiornare automaticamente i relativi componenti a ogni frame.
 
@@ -864,7 +864,7 @@ Spiegazione
 - AttackSystem controlla le collisioni tra hitbox e bersagli;
 - ProjectileSystem gestisce i movimenti e la vita dei proiettili.
 
-### 8.6  In sintesi
+### 6.6  In sintesi
 
 | Evento	| Sistema / Componente coinvolto |
 | Il giocatore preme Spazio	| InputSystem → AttackComponent |
