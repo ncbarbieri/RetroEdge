@@ -8,8 +8,10 @@
 package ui.elements;
 
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import engine.components.MotionComponent;
+import engine.components.ColliderComponent;
 import ui.UIElement;
 import ui.UISpritesheet;
 import engine.Entity;
@@ -51,11 +53,16 @@ public class UINotification extends UIElement {
         if (!isVisible() || frames == null || frames[currentFrame] == null) return;
 
         MotionComponent position = trackedEntity.getComponent(MotionComponent.class);
-        if (position == null) return;
+        ColliderComponent collider = trackedEntity.getComponent(ColliderComponent.class);
+        if (position == null || collider == null) return;
+
+        // Get Bounding Box
+        Rectangle boundingBox = collider.getBoundingBox();
 
         // Convert world position to element’s position
-        int worldX = (int) position.getX() + offsetX;
-        int worldY = (int) position.getY() + offsetY;
+        int worldX = (int) position.getX() + boundingBox.x + offsetX;
+        int worldY = (int) position.getY() + boundingBox.y + offsetY;
+        
 
         // If usesCameraOffsets is true, subtract camera offsets
         if (usesCameraOffsets()) {
