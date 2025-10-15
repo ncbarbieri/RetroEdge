@@ -83,6 +83,19 @@ public class Entity {
     }
     
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Entity)) return false;
+        Entity other = (Entity) obj;
+        return this.id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(id);
+    }
+    
+    @Override
     public String toString() {
         return String.format(
             "Entity {id=%d, type=%s, layer=%d, alive=%s, components=%s}",

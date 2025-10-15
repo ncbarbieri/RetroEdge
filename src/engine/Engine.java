@@ -11,10 +11,11 @@ package engine;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
 import enums.EngineState;
 import helpers.Logger;
 import input.KeyboardInputHandler;
@@ -28,6 +29,7 @@ public abstract class Engine {
     private final List<Entity> entities = new ArrayList<>();
     private final List<Entity> entitiesToRemove = new ArrayList<>();
     private final List<Entity> entitiesToAdd = new ArrayList<>();
+    private final Map<Integer, Entity> entityMap = new HashMap<>();    
     private final List<BaseSystem> systems = new ArrayList<>();
     private final Comparator<BaseSystem> systemComparator;
     private final KeyboardInputHandler inputHandler;
@@ -96,12 +98,9 @@ public abstract class Engine {
         if (currentState == null) {
             // Case (a): Engine just started, no current state yet.
 //            Logger.log("No current state, engine just started. Switching directly to nextState.");
+        	cleanup();
             currentState = nextState;
             nextState = null;
-
-            // Clear and init the new state
-            synchronized (entities) { entities.clear(); }
-            synchronized (systems) { systems.clear(); }
 
             currentState.init();
             
@@ -134,13 +133,10 @@ public abstract class Engine {
             } else {
                 // No exit transition, clean up immediately and move on
 //                Logger.log("No exit transition. Cleaning up current state and switching now.");
-                currentState.cleanup();
+                cleanup();
 
                 currentState = nextState;
                 nextState = null;
-
-                synchronized (entities) { entities.clear(); }
-                synchronized (systems) { systems.clear(); }
 
                 currentState.init();
                 TransitionEffect enterEffect = currentState.getEnterTransition();
@@ -171,15 +167,13 @@ public abstract class Engine {
             if (stateManager.getCurrentState() == EngineState.EXITING) {
                 // Just finished exit transition: cleanup old state, load new one
 //                Logger.log("Exit transition finished. Cleaning up old state and switching to next state.");
-                if (currentState != null) {
-                    currentState.cleanup();
-                }
+//                if (currentState != null) {
+//                    currentState.cleanup();
+//                }
+                cleanup();
 
                 currentState = nextState;
                 nextState = null;
-
-                synchronized (entities) { entities.clear(); }
-                synchronized (systems) { systems.clear(); }
 
                 currentState.init();
                 TransitionEffect enterEffect = currentState.getEnterTransition();
@@ -215,6 +209,7 @@ public abstract class Engine {
             for (Entity entity : entities) {
                 if (!entity.isAlive()) {
                     entitiesToRemove.add(entity);
+                    entityMap.remove(entity.getId());
                 }
             }
             entities.removeAll(entitiesToRemove);
@@ -233,11 +228,22 @@ public abstract class Engine {
 
     public void addEntity(Entity entity) {
         if (entity == null) {
-            throw new IllegalArgumentException("Entity cannot be null.");
+        	Logger.log("Entity cannot be null.");
+        	return;
         }
 
+        int id = entity.getId();
+
+        // Controllo duplicato
+        if (entityMap.containsKey(id)) {
+            Logger.log("Duplicated entity ID "
+                + id + " (" + entity.getType() + ")");
+            return;
+        }
+        
         synchronized (entities) {
             entitiesToAdd.add(entity);
+            entityMap.put(id, entity);
         }
     }
 
@@ -289,6 +295,14 @@ public abstract class Engine {
         }
     }
 
+    public Entity getEntityById(int id) {
+    	Entity entity = null;
+        synchronized (entities) {
+        	entity = entityMap.get(id);
+        }
+        return entity;
+    }
+    
     public KeyboardInputHandler getInputHandler() {
         return inputHandler;
     }
@@ -297,19 +311,26 @@ public abstract class Engine {
         return mouseInputHandler;
     }
 
+    /**
+     * Pulisce tutte le entità e i sistemi.
+     * I blocchi synchronized su entities e systems sono separati
+     * per evitare deadlock dovuti al thread di rendering Swing.
+     */
     public void cleanup() {
         try {
-            synchronized (entities) {
-                synchronized (systems) {
-                    if (currentState != null) {
-                        currentState.cleanup();
-                    }
-                    entities.clear();
-                    entitiesToAdd.clear();
-                    entitiesToRemove.clear();
-                    systems.clear();
-                }
+            if (currentState != null) {
+                currentState.cleanup();
             }
+            synchronized (entities) {
+                entities.clear();
+                entitiesToAdd.clear();
+                entitiesToRemove.clear();
+                entityMap.clear();
+            }
+            synchronized (systems) {
+                systems.clear();
+            }
+
             Logger.log("Engine cleaned up successfully.");
         } catch (Exception e) {
             Logger.log("Error during cleanup: " + e.getMessage(), e);
